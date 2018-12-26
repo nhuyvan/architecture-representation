@@ -1,0 +1,47 @@
+@import '~@angular/material/prebuilt-themes/indigo-pink.css';
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden auto;
+    width: 100vw;
+    height: 100vh;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.ripple {
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    &>span {
+        display: inline-block;
+        position: absolute;
+        animation: ripple;
+        animation-duration: 600ms;
+        opacity: 0.7;
+        transform: scale(0);
+        background-color: #fff;
+        border-radius: 100%;
+        transform-origin: 50% 50%;
+    }
+}
+
+@keyframes ripple {
+    from {
+        opacity: 1;
+        transform: scale(0, 0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(3, 3);
+    }
+}

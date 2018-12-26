@@ -1,0 +1,35 @@
+<svg:g #column
+       [attr.transform]='"translate(" + left + ", 0)"'
+       class='column'
+       (click)='onCellClicked($event)'
+       (dblclick)='showTextEditor($event)'>
+    <foreignObject [attr.width]='width'
+                   [attr.height]='headerHeight'
+                   x='0'
+                   y='0'>
+        <xhtml:header>
+            <span class='column__title'
+                  [style.color]='headerTitleColor'>
+                {{header}}
+            </span>
+            <div>
+                <button class='icon-container'
+                        tooltip='Add a new cell'
+                        (click)='addCell($event)'
+                        style='margin-right: 5px'>
+                    <i class='material-icons'>add</i>
+                </button>
+                <button class='icon-container'
+                        [tooltip]='(shouldShowConnections() ? "Hide" : "Show") + " connections for selected component"'
+                        (click)='showConnectionsForSelectedComponent($event)'
+                        style='margin-left: 5px'>
+                    <i *ngIf='shouldShowConnections();else show'
+                       class='material-icons'>visibility_off</i>
+                    <ng-template #show>
+                        <i class='material-icons'>visibility</i>
+                    </ng-template>
+                </button>
+            </div>
+        </xhtml:header>
+    </foreignObject>
+</svg:g>

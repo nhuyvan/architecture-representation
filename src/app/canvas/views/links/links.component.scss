@@ -1,0 +1,12 @@
+.link-selection-handle:hover {
+    cursor: pointer;
+}
+
+.links.highlighting g:not(.selected) {
+    stroke-opacity: 0.1;
+}
+
+.links g[data-selected] .link {
+    stroke-width: 4;
+    stroke-opacity: 1;
+}

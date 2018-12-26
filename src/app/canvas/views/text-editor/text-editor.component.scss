@@ -1,0 +1,28 @@
+.text-editor {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.text-editor__input {
+    text-align: center;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    background-color: #fff;
+    position: relative;
+    div {
+        background-color: #fff;
+        border: 1px solid #000;
+        position: absolute;
+    }
+}
+
+div {
+    outline: none;
+}

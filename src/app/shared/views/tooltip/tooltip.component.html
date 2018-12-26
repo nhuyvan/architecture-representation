@@ -1,0 +1,9 @@
+<div class='mapper-tooltip {{position}}'
+     [@fade]='showFlag'
+     #tooltip
+     (@fade.done)='onFadeDone($event)'
+     (mouseover)='onMouseOver($event.target)'
+     (mouseout)='onMouseOut($event.target)'>
+    <div class='mapper-tooltip__arrow'></div>
+    <div [innerHTML]='content'></div>
+</div>

@@ -1,0 +1,45 @@
+<svg #canvas
+     highlighter
+     [selectedCell]='selectedCell'
+     [selectedLink]='selectedLink'
+     [existingLinks]='existingLinks'>
+    <g column
+       [width]='columnWidth'
+       [height]='columnHeight'
+       header='Architectural Elements'
+       headerTitleColor='magenta'
+       prefix='element'
+       [cellDeleted]='elementCellDeleted'
+       (cellAdded)='onCellAdded($event, "element")'
+       (cellClicked)='onElementCellClicked($event)'
+       (showConnections)='showConnectionsForSelectedComponent($event)'
+       (layoutChanged)='onColumnLayoutChanged($event, "element")'></g>
+    <g column
+       [width]='columnWidth'
+       [height]='columnHeight'
+       [left]='spacingBetweenColumns + columnWidth'
+       header='System Properties'
+       headerTitleColor='orange'
+       prefix='property'
+       [cellDeleted]='propertyCellDeleted'
+       (cellAdded)='onCellAdded($event, "property")'
+       (cellClicked)='onPropertyCellClicked($event)'
+       (showConnections)='showConnectionsForSelectedComponent($event)'
+       (layoutChanged)='onColumnLayoutChanged($event, "property")'></g>
+    <g column
+       [width]='columnWidth'
+       [height]='columnHeight'
+       [left]='(spacingBetweenColumns + columnWidth) * 2'
+       header='System Qualities'
+       headerTitleColor='blue'
+       prefix='quality'
+       [cellDeleted]='qualityCellDeleted'
+       (cellAdded)='onCellAdded($event, "quality")'
+       (cellClicked)='onQualityCellClicked($event)'
+       (showConnections)='showConnectionsForSelectedComponent($event)'
+       (layoutChanged)='onColumnLayoutChanged($event, "quality")'></g>
+    <g links
+       [links]='existingLinks'
+       [columns]='columns'
+       (linkSelected)='onLinkSelected($event)'></g>
+</svg>

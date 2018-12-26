@@ -1,0 +1,10 @@
+<div class='text-editor'>
+    <div #input
+         class='text-editor__input'>
+        <div style='width: 100%'
+             contenteditable='true'
+             (blur)='onBlur()'
+             (keydown)='moveIntoViewIfOverflowsOffscreen($event)'>
+        </div>
+    </div>
+</div>
