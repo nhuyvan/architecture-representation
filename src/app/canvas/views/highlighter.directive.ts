@@ -15,31 +15,34 @@ export class HighlighterDirective implements OnChanges {
   selectedCell: Cell;
 
   @Input()
-  existingLinks: Link[];
+  linkTable: { [sourceCellSelector: string]: Link[] };
 
   constructor(@Host() private _canvas: ElementRef<SVGElement>) { }
 
   ngOnChanges(changes: SimpleChanges) {
+    // Highlight/unhighlight the selected cell, and all the links coming out of it
+    // or into it, and also directly or indirectly linked cells to the selected cell
     if ('selectedCell' in changes) {
-      if (changes.selectedCell.currentValue) {
-        this._highlightCell(changes.selectedCell.currentValue);
-        if (this.existingLinks)
-          for (const link of this.existingLinks)
-            if ([link.source, link.target].includes(changes.selectedCell.currentValue)) {
-              this._highlightCell(link.source);
-              this._highlightCell(link.target);
-              this._highlightLink(link);
-            }
+      if (this.selectedCell) {
+        this._highlightCell(this.selectedCell);
+        this._forEachLink(link => {
+          if (link.source === this.selectedCell || link.target === this.selectedCell) {
+            this._highlightCell(link.source);
+            this._highlightCell(link.target);
+            this._highlightLink(link);
+          }
+        });
       }
       else if (changes.selectedCell.previousValue) {
-        this._unhighlightCell(changes.selectedCell.previousValue);
-        if (this.existingLinks)
-          for (const link of this.existingLinks)
-            if ([link.source, link.target].includes(changes.selectedCell.previousValue)) {
-              this._unhighlightCell(link.source);
-              this._unhighlightCell(link.target);
-              this._unhighlightLink(link);
-            }
+        const previousCell = changes.selectedCell.previousValue;
+        this._unhighlightCell(previousCell);
+        this._forEachLink(link => {
+          if (link.source === previousCell || link.target === previousCell) {
+            this._unhighlightCell(link.source);
+            this._unhighlightCell(link.target);
+            this._unhighlightLink(link);
+          }
+        });
       }
     }
 
@@ -55,6 +58,13 @@ export class HighlighterDirective implements OnChanges {
         this._unhighlightLink(changes.selectedLink.previousValue);
       }
     }
+  }
+
+  private _forEachLink(action: (link: Link) => void) {
+    if (this.linkTable)
+      for (const sourceCellSelector in this.linkTable)
+        for (const link of this.linkTable[sourceCellSelector])
+          action(link);
   }
 
   private _highlightCell(cell: Cell) {

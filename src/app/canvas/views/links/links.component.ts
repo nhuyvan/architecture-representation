@@ -14,7 +14,7 @@ import { Cell } from '../../models/Cell';
 export class LinksComponent implements OnChanges, AfterViewInit {
 
   @Input()
-  links: Link[];
+  linkTable: { [sourceCellId: string]: Array<Link> } = {};
 
   @Input()
   columns: Column;
@@ -35,14 +35,12 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   }
 
   ngOnChanges() {
-    if (this._linksRef && this.links && this.columns && this._wrapper) {
+    if (this._linksRef && this.linkTable && this.columns && this._wrapper) {
       this._linksRef.nativeElement.removeChild(this._wrapper);
       this._wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      for (const link of this.links) {
-        this._renderLink(link);
-        this._unhighlightCell(link.source);
-        this._unhighlightCell(link.target);
-      }
+      for (const sourceCellSelector in this.linkTable)
+        for (const link of this.linkTable[sourceCellSelector])
+          this._renderLink(link);
       this._linksRef.nativeElement.appendChild(this._wrapper);
     }
   }
@@ -92,10 +90,6 @@ export class LinksComponent implements OnChanges, AfterViewInit {
     container.appendChild(line);
     container.appendChild(lineHoverSelectionHandle);
     this._wrapper.appendChild(container);
-  }
-
-  private _unhighlightCell(cell: Cell) {
-    document.querySelector(`#${cell.idSelector}`).removeAttribute('data-selected');
   }
 
 }

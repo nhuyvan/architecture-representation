@@ -76,22 +76,24 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
       const affectedId = this.cellDeleted.id;
       this._column.removeChild(this._cellDomElements[affectedId]);
       this._cellDomElements.splice(affectedId, 1);
-      this._adjustIdsOfDomElementsAfterDeletedElement(affectedId);
-      this._centerCellsInColumn(this.cells);
-      this._notifyLayoutChange(this.cellDeleted.column, ColumnLayoutChangeType.CELL_REMOVED);
+      if (this.cells.length > 0) {
+        this._adjustIdsOfCellDomElementsAfterDeletedElement(affectedId);
+        this._centerCellsInColumn(this.cells);
+        this._notifyLayoutChange(this.cellDeleted.column, ColumnLayoutChangeType.CELL_REMOVED);
+      }
     }
 
     if ('height' in changes && changes.height.currentValue) {
       this._centerCellsInColumn(this.cells);
     }
 
-    if ('cells' in changes && !changes.cells.firstChange) {
-      this._centerCellsInColumn(changes.cells.currentValue);
-      this._notifyLayoutChange(changes.cells.currentValue[0].column, ColumnLayoutChangeType.CELL_ADDED);
+    if ('cells' in changes && !changes.cells.firstChange && this.cells.length > 0) {
+      this._centerCellsInColumn(this.cells);
+      this._notifyLayoutChange(this.cells[0].column, ColumnLayoutChangeType.CELL_ADDED);
     }
   }
 
-  private _adjustIdsOfDomElementsAfterDeletedElement(startId: number) {
+  private _adjustIdsOfCellDomElementsAfterDeletedElement(startId: number) {
     for (let i = startId; i < this._cellDomElements.length; i++) {
       this._cellDomElements[i].setAttribute('data-id', String(i));
       this._cellDomElements[i].id = this.cells[i].idSelector;
@@ -234,9 +236,11 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
 
   private _toggleHighlightCell(cell: Cell): Cell {
     const cellDomElement = this._cellDomElements[cell.id];
-    for (const hightlightedCell of Array.from(document.querySelectorAll('svg g[data-selected]')))
-      if (cellDomElement !== hightlightedCell)
-        hightlightedCell.removeAttribute('data-selected');
+    document.querySelectorAll('svg g[data-selected]')
+      .forEach(hightlightedCell => {
+        if (cellDomElement !== hightlightedCell)
+          hightlightedCell.removeAttribute('data-selected');
+      });
 
     if (cellDomElement.hasAttribute('data-selected')) {
       cellDomElement.removeAttribute('data-selected');

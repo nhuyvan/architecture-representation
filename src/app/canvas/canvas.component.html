@@ -2,7 +2,7 @@
      highlighter
      [selectedCell]='selectedCell'
      [selectedLink]='selectedLink'
-     [existingLinks]='existingLinks'>
+     [linkTable]='linkTable'>
     <g column
        [cells]='columns.element'
        [width]='columnWidth'
@@ -42,7 +42,7 @@
        (showConnections)='showConnectionsForSelectedComponent($event)'
        (layoutChanged)='onColumnLayoutChanged($event, "quality")'></g>
     <g links
-       [links]='existingLinks'
+       [linkTable]='linkTable'
        [columns]='columns'
        (linkSelected)='onLinkSelected($event)'></g>
 </svg>

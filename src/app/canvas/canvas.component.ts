@@ -17,7 +17,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   columnWidth = 0;
   columnHeight = 0;
   spacingBetweenColumns = 0;
-  existingLinks: Link[] = [];
+  linkTable: { [sourceCellId: string]: Array<Link> } = {};
   selectedCell: Cell;
   selectedLink: Link;
   readonly columns: Column = {
@@ -68,18 +68,23 @@ export class CanvasComponent implements OnInit, AfterViewInit {
           case 'quality':
             this.qualityCellDeleted = this._selectedCell;
         }
-        this._deleteCell();
+        this._deleteCell(this._selectedCell);
+        this._notifyLinksChange();
       }
-      else if (this._selectedLink)
+      else if (this._selectedLink) {
         this._deleteLink(this._selectedLink);
+        this._notifyLinksChange();
+      }
     }
   }
 
-  private _deleteCell() {
-    this._deleteCellAndAdjustCellIdsAfterDeletedCell(this._selectedCell);
-    for (const link of this.existingLinks)
-      if (link.source === this._selectedCell || link.target === this._selectedCell)
-        this._deleteLink(link);
+  private _deleteCell(cellToDelete: Cell) {
+    this._deleteCellAndAdjustCellIdsAfterDeletedCell(cellToDelete);
+    delete this.linkTable[cellToDelete.idSelector];
+    for (const sourceCell in this.linkTable)
+      for (const link of this.linkTable[sourceCell])
+        if (link.target === cellToDelete)
+          this._deleteLink(link);
     this._selectedCell = null;
     this.selectedCell = null;
     this._sourceCell = null;
@@ -95,22 +100,25 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   }
 
   private _deleteLink(link: Link) {
-    this.existingLinks = this.existingLinks.filter(e => e !== link);
+    this.linkTable[link.source.idSelector] = this.linkTable[link.source.idSelector].filter(e => e !== link);
     this._selectedLink = null;
     this.selectedLink = null;
   }
 
   onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {
-    if (layoutChange.type === ColumnLayoutChangeType.CELL_ADDED || layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_INCREASED) {
+    if (
+      layoutChange.type === ColumnLayoutChangeType.CELL_ADDED ||
+      layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_INCREASED
+    ) {
       const cells = this.columns[layoutChange.column];
       this._resizeCanvasIfCellOverflows(cells[cells.length - 1]);
     }
     else
       this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
-    this._adjustAllLinks();
+    this._notifyLinksChange();
   }
 
-  private _resizeCanvasIfCellOverflows(cell: Cell, newColumnHeight?: number) {
+  private _resizeCanvasIfCellOverflows(cell: Cell) {
     const cellBottom = cell.top + cell.height
     if (cellBottom > this._canvasRect.height) {
       this._canvasRef.nativeElement.style.height = this._canvasRect.height
@@ -119,10 +127,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         + 'px';
       this._canvasRect = this._canvasRef.nativeElement.getBoundingClientRect();
       this.columnHeight = this._canvasRect.height;
-    }
-    else if (newColumnHeight) {
-      this._canvasRef.nativeElement.style.height = newColumnHeight + 'px';
-      this.columnHeight = newColumnHeight;
     }
   }
 
@@ -155,8 +159,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     return cells.reduce((sum, cell) => sum + cell.height, 0);
   }
 
-  private _adjustAllLinks() {
-    this.existingLinks = [...this.existingLinks];
+  private _notifyLinksChange() {
+    this.linkTable = { ...this.linkTable };
   }
 
   showConnectionsForSelectedComponent(state: boolean) {
@@ -197,6 +201,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         source: this._sourceCell,
         target: cell
       });
+      this._unhighlightCell(this._sourceCell);
+      this._unhighlightCell(cell);
+      this._notifyLinksChange();
       this._sourceCell = null;
       this._selectedCell = null;
     }
@@ -213,6 +220,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         source: this._sourceCell,
         target: cell
       });
+      this._notifyLinksChange();
+      this._unhighlightCell(this._sourceCell);
+      this._unhighlightCell(cell);
     }
     this._selectedCell = !this._sourceCell ? cell : null;
     this._selectedLink = null;
@@ -220,12 +230,18 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   }
 
   private _addNewLink(link: Link) {
-    if (this.existingLinks.every(e => !this._areDuplicates(e, link)))
-      this.existingLinks = this.existingLinks.concat(link);
+    if (!(link.source.idSelector in this.linkTable))
+      this.linkTable[link.source.idSelector] = [link];
+    else if (!this._linkExists(this.linkTable[link.source.idSelector], link))
+      this.linkTable[link.source.idSelector].push(link);
   }
 
-  private _areDuplicates(link1: Link, link2: Link) {
-    return link1.source === link2.source && link1.target === link2.target;
+  private _linkExists(links: Link[], newLink: Link) {
+    return links.some(e => e.source === newLink.source && e.target === newLink.target);
+  }
+
+  private _unhighlightCell(cell: Cell) {
+    this._canvasRef.nativeElement.querySelector(`#${cell.idSelector}`).removeAttribute('data-selected');
   }
 
 }
