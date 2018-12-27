@@ -2,10 +2,10 @@ import { Component, Input, ViewEncapsulation, Output, EventEmitter, ViewChild, E
 
 import { TooltipService } from '@shared/views/tooltip/tooltip.service';
 import { createSvgElement } from '../../utils';
-import { CellAdded } from '../../models/CellAddedEvent';
 import { Cell } from '../../models/Cell';
-import { ColumnLayoutChange } from 'app/canvas/models/ColumnLayoutChange';
+import { ColumnLayoutChange, ColumnLayoutChangeType } from '../../models/ColumnLayoutChange';
 import { TextEditorService } from '../text-editor/text-editor.service';
+import { ColumnId } from '../../models/Column';
 
 @Component({
   selector: '[column]',
@@ -14,6 +14,9 @@ import { TextEditorService } from '../text-editor/text-editor.service';
   encapsulation: ViewEncapsulation.None
 })
 export class ColumnComponent implements OnChanges, AfterViewInit {
+
+  @Input()
+  cells: Cell[] = [];
 
   @Input()
   prefix: 'element' | 'property' | 'quality';
@@ -37,7 +40,7 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
   cellDeleted: Cell;
 
   @Output()
-  cellAdded = new EventEmitter<CellAdded>();
+  cellAdded = new EventEmitter<Cell>();
 
   @Output()
   cellClicked = new EventEmitter<Cell>();
@@ -48,18 +51,15 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
   @Output()
   layoutChanged = new EventEmitter<ColumnLayoutChange>();
 
-  headerHeight = 100;
-  id = 0;
-  cellBeingEdited: Cell;
+  readonly headerHeight = 100;
 
   @ViewChild('column')
-  private _columnRef: ElementRef<Cell>;
-  private _column: Cell;
+  private _columnRef: ElementRef<SVGGElement>;
+  private _column: SVGGElement;
   private _cellWidth = 0;
   private _marginLeft = 0;
-  private _cells: Map<Cell, ClientRect> = new Map<Cell, ClientRect>();
-  private _lastCellInColumn: Cell;
-  private readonly _cellDefaultHeight = 50;
+  private _cellDomElements: Array<SVGGElement> = [];
+  private readonly _defaultCellHeight = 50;
   private readonly _minimumSpacingBetweenCells = 5;
   private static _isShowingConnections = false;
 
@@ -72,9 +72,29 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
       // 5% of width
       this._marginLeft = this.width * 5 / 100;
     }
-    if ('cellDeleted' in changes && changes.cellDeleted.currentValue) {
-      this._column.removeChild(changes.cellDeleted.currentValue);
-      this._centerCellsInColumn(true);
+    if ('cellDeleted' in changes && !changes.cellDeleted.firstChange) {
+      const affectedId = this.cellDeleted.id;
+      this._column.removeChild(this._cellDomElements[affectedId]);
+      this._cellDomElements.splice(affectedId, 1);
+      this._adjustIdsOfDomElementsAfterDeletedElement(affectedId);
+      this._centerCellsInColumn(this.cells);
+      this._notifyLayoutChange(this.cellDeleted.column, ColumnLayoutChangeType.CELL_REMOVED);
+    }
+
+    if ('height' in changes && changes.height.currentValue) {
+      this._centerCellsInColumn(this.cells);
+    }
+
+    if ('cells' in changes && !changes.cells.firstChange) {
+      this._centerCellsInColumn(changes.cells.currentValue);
+      this._notifyLayoutChange(changes.cells.currentValue[0].column, ColumnLayoutChangeType.CELL_ADDED);
+    }
+  }
+
+  private _adjustIdsOfDomElementsAfterDeletedElement(startId: number) {
+    for (let i = startId; i < this._cellDomElements.length; i++) {
+      this._cellDomElements[i].setAttribute('data-id', String(i));
+      this._cellDomElements[i].id = this.cells[i].idSelector;
     }
   }
 
@@ -93,166 +113,139 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
     return ColumnComponent._isShowingConnections;
   }
 
-  showTextEditor(event: MouseEvent) {
-    const target = event.target as SVGElement;
-    const classNameOfClickedElement = target.className;
-    if (classNameOfClickedElement !== 'icon-container' && classNameOfClickedElement !== 'material-icons') {
+  showTextEditor(target: HTMLElement | SVGGElement) {
+    if (target.hasAttribute('data-cell')) {
       event.stopPropagation();
-      this._textEditorService.show(target.parentElement.getBoundingClientRect(), target.parentElement.dataset.text)
-        .textAdded(text => this._onTextAdded(text, ((target.parentElement) as any) as Cell));
+      this._textEditorService.show(this.cells[+target.dataset.id])
+        .textAdded((text, cellBeingEdited) => this._onTextAdded(text, cellBeingEdited));
     }
   }
 
   private _onTextAdded(text: string, cellBeingEdited: Cell, resetOnClick = false) {
-    const { height: cellHeight, width: cellWidth } = this._cells.get(cellBeingEdited);
-    const textContainer = this._addTextToCellBeingEdited(text, cellBeingEdited, cellWidth, cellHeight);
+    const textContainer = this._addTextToCellBeingEdited(text, cellBeingEdited);
     const { height: textContainerHeight } = textContainer.firstElementChild.getBoundingClientRect();
-    const adjustedHeight = this._centerTextInCellBeingEdited(cellHeight, cellBeingEdited, textContainerHeight, textContainer);
-    if (adjustedHeight !== cellHeight) {
-      this._cells.set(cellBeingEdited, cellBeingEdited.getBoundingClientRect());
-      this._centerCellsInColumn(true);
-      this._notifyLayoutChange(this.height);
+    const adjustedHeight = this._centerTextInCellBeingEdited(cellBeingEdited, textContainerHeight, textContainer);
+    const heightDifference = adjustedHeight - cellBeingEdited.height;
+    if (heightDifference !== 0) {
+      cellBeingEdited.height = adjustedHeight;
+      this._centerCellsInColumn(this.cells);
+      this._notifyLayoutChange(
+        cellBeingEdited.column,
+        heightDifference < 0 ? ColumnLayoutChangeType.CELL_HEIGHT_REDUCED : ColumnLayoutChangeType.CELL_HEIGHT_INCREASED
+      );
     }
-    cellBeingEdited.dataset.text = resetOnClick ? '' : text;
-    cellBeingEdited = null;
+    cellBeingEdited.text = resetOnClick ? '' : text;
+    this._cellDomElements[cellBeingEdited.id].removeAttribute('data-selected');
   }
 
-  private _addTextToCellBeingEdited(text: string, cellBeingEdited: Cell, cellWidth: number, cellHeight: number) {
-    const foreignObject = cellBeingEdited.querySelector('foreignObject') || document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+  private _addTextToCellBeingEdited(text: string, cellBeingEdited: Cell) {
+    const cellDomElement = this._cellDomElements[cellBeingEdited.id];
+    const foreignObject = cellDomElement.querySelector('foreignObject')
+      || document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
     if (foreignObject.childElementCount > 0)
       foreignObject.removeChild(foreignObject.firstElementChild)
     foreignObject.setAttribute('x', '0');
     foreignObject.setAttribute('y', '0');
-    foreignObject.setAttribute('width', String(cellWidth));
-    foreignObject.setAttribute('height', String(cellHeight));
+    foreignObject.setAttribute('width', String(cellBeingEdited.width));
+    foreignObject.setAttribute('height', String(cellBeingEdited.height));
     const textCenterStyle = 'display:flex;justify-content:center;align-items:center;position:relative;white-space:pre;text-align:center';
     foreignObject.innerHTML = `<div style='${textCenterStyle}'>${text}</div>`;
-    cellBeingEdited.appendChild(foreignObject);
+    cellDomElement.appendChild(foreignObject);
     return foreignObject;
   }
 
-  private _centerTextInCellBeingEdited(cellHeight: number, cellBeingEdited: Cell, textContainerHeight: number, textContainer: SVGForeignObjectElement) {
-    cellHeight += (textContainerHeight - cellHeight) + 10; // padding top and bottom
-    cellHeight = Math.max(cellHeight, 50);
-    cellBeingEdited.firstElementChild.setAttribute('height', `${cellHeight}`);
-    textContainer.setAttribute('height', `${cellHeight}`);
-    (textContainer.firstElementChild as HTMLDivElement).style.height = cellHeight + 'px';
-    return cellHeight;
+  private _centerTextInCellBeingEdited(cellBeingEdited: Cell, textContainerHeight: number, textContainer: SVGForeignObjectElement) {
+    // +10 padding top and bottom
+    const adjustedHeight = Math.max(cellBeingEdited.height + (textContainerHeight - cellBeingEdited.height) + 10, 50);
+    this._cellDomElements[cellBeingEdited.id].firstElementChild.setAttribute('height', `${adjustedHeight}`);
+    textContainer.setAttribute('height', `${adjustedHeight}`);
+    (textContainer.firstElementChild as HTMLDivElement).style.height = adjustedHeight + 'px';
+    return adjustedHeight;
   }
 
-  // onTextAdded(addedText: string) {
-  //   let textElement = cellBeingEdited.querySelector('text');
-  //   if (textElement)
-  //     cellBeingEdited.removeChild(textElement);
-  //   textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-  //   let { top: cellTop, width: cellWidth, height: cellHeight } = cellBeingEdited.getBoundingClientRect();
-  //   const texts = addedText.trim()
-  //     .split('\n');
-  //   texts.forEach((text, i) => {
-  //     const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-  //     tspan.setAttribute('x', '0');
-  //     tspan.setAttribute('y', `${i * 15}`);
-  //     tspan.innerHTML = text;
-  //     textElement.appendChild(tspan);
-  //   })
-  //   cellBeingEdited.appendChild(textElement);
-  //   const { top: textTop width: textElementWidth, height: textElementHeight } = textElement.getBoundingClientRect();
-  //   const heightDifference = Math.abs(textElementHeight - cellHeight)
-  //   if (heightDifference < 20) {
-  //     cellHeight += heightDifference + 20;
-  //     cellBeingEdited.firstElementChild.setAttribute('height', String(cellHeight));
-  //   }
-  //   const textElementLeft = (cellWidth - textElementWidth) / 2;
-  //   const textElementTop = (cellHeight - textElementHeight) / (texts.length + 1) + Math.abs(textTop - cellTop);
-  //   textElement.setAttribute('transform', `translate(${textElementLeft}, ${textElementTop})`);
-  //   cellBeingEdited.dataset.text = addedText;
-  //   cellBeingEdited = null;
-  // }
-
-  private _notifyLayoutChange(columnHeight?: number) {
-    this.layoutChanged.emit({
-      lastCellInColumn: this._lastCellInColumn,
-      cellsInColumn: this._cells,
-      columnHeight
-    });
+  private _notifyLayoutChange(columnId: ColumnId, type: ColumnLayoutChangeType) {
+    this.layoutChanged.emit({ column: columnId, type });
   }
 
-  addCell(event: MouseEvent) {
-    event.stopPropagation();
-    this._lastCellInColumn = this._createCell();
-    this._column.appendChild(this._lastCellInColumn);
-    this._cells.set(this._lastCellInColumn, this._lastCellInColumn.getBoundingClientRect());
-    this._centerCellsInColumn();
-    this._notifyLayoutChange();
-    this.cellAdded.emit({
-      id: this.id,
-      cell: this._lastCellInColumn
-    });
-    this.id++;
-    this._onTextAdded('Double click to add text', this._lastCellInColumn, true);
+  addCell() {
+    const cell = this._createNewCell();
+    this._renderCell(cell);
+    this.cellAdded.emit(cell);
+    this._onTextAdded(cell.text, cell, true);
   }
 
-  private _createCell(): Cell {
-    const cell = createSvgElement(
+  private _createNewCell(): Cell {
+    return {
+      id: this.cells.length,
+      left: this._marginLeft + this.left,
+      top: 0,
+      width: this._cellWidth,
+      height: this._defaultCellHeight,
+      text: 'Double click to add text',
+      column: this.prefix,
+      idSelector: `${this.prefix}-cell-${this.cells.length}`
+    }
+  }
+
+  private _renderCell(cell: Cell) {
+    const cellElement = createSvgElement(
       'rect',
       {
         stroke: '#000',
         fill: '#fff',
         x: 0,
         y: 0,
-        width: this._cellWidth,
-        height: this._cellDefaultHeight
+        width: cell.width,
+        height: cell.height
       }) as SVGRectElement;
     const cellContainer = createSvgElement(
       'g',
       {
-        id: `${this.prefix}-cell-${this.id}`,
-        'data-id': this.id,
-        'data-column-prefix': this.prefix
+        id: cell.idSelector,
+        'data-id': cell.id,
+        'data-column-prefix': cell.column,
+        'data-cell': 'true'
       }) as SVGGElement;
-    cellContainer.appendChild(cell);
-    return cellContainer as Cell;
+    cellContainer.appendChild(cellElement);
+    this._column.appendChild(cellContainer);
+    this._cellDomElements.push(cellContainer);
   }
 
-  private _centerCellsInColumn(shrinkColumn = false) {
-    let totalHeightOfAllCells = 0;
-    for (const cellGeometry of this._cells.values())
-      totalHeightOfAllCells += cellGeometry ? cellGeometry.height : this._cellDefaultHeight;
+  private _centerCellsInColumn(cells: Cell[]) {
+    const totalHeightOfAllCells = cells.reduce((sum, cell) => sum + cell.height, 0);
     const remainingHeight = this.height - this.headerHeight - totalHeightOfAllCells;
-    const spacingBetweenCells = Math.max(this._minimumSpacingBetweenCells, remainingHeight / (this._cells.size + 1));
+    const spacingBetweenCells = Math.max(this._minimumSpacingBetweenCells, remainingHeight / (cells.length + 1));
     let topOfCurrentCell = spacingBetweenCells + this.headerHeight;
-    this._cells.forEach((cellGeometry, cell) => {
-      cell.setAttribute('transform', `translate(${this._marginLeft},${topOfCurrentCell})`);
-      topOfCurrentCell += (cellGeometry ? cellGeometry.height : this._cellDefaultHeight) + spacingBetweenCells;
-      this._cells.set(cell, cell.getBoundingClientRect());
-    });
+    for (const cell of cells) {
+      cell.top = topOfCurrentCell;
+      this._repositionCell(cell);
+      topOfCurrentCell += cell.height + spacingBetweenCells;
+    }
   }
 
-  private _shrinkColumnIfTooTall(totalHeightOfAllCells: number) {
-    const minimumColumnHeight = totalHeightOfAllCells
-      + this.headerHeight
-      + this._minimumSpacingBetweenCells * (this._cells.size + 1);
-    this.height = Math.min(this.height, minimumColumnHeight);
+  private _repositionCell(cell: Cell) {
+    this._cellDomElements[cell.id].setAttribute('transform', `translate(${this._marginLeft},${cell.top})`);
   }
 
-  onCellClicked(event: MouseEvent) {
-    const target = event.target as SVGRectElement;
-    this.cellClicked.emit(this._toggleHighlightCell(target.parentElement as any));
+  onCellClicked(target: HTMLElement | SVGElement) {
+    if (target.hasAttribute('data-cell'))
+      this.cellClicked.emit(this._toggleHighlightCell(this.cells[+target.dataset.id]));
   }
 
   private _toggleHighlightCell(cell: Cell): Cell {
+    const cellDomElement = this._cellDomElements[cell.id];
     for (const hightlightedCell of Array.from(document.querySelectorAll('svg g[data-selected]')))
-      if (cell !== hightlightedCell)
+      if (cellDomElement !== hightlightedCell)
         hightlightedCell.removeAttribute('data-selected');
 
-    if (cell.dataset.selected === 'selected') {
-      cell.removeAttribute('data-selected');
+    if (cellDomElement.hasAttribute('data-selected')) {
+      cellDomElement.removeAttribute('data-selected');
       ColumnComponent._isShowingConnections = false;
       this.showConnections.emit(false);
       return null;
     }
     else {
-      cell.dataset.selected = 'selected';
+      cellDomElement.setAttribute('data-selected', '');
       return cell;
     }
   }

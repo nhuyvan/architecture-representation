@@ -1,56 +1,57 @@
-foreignObject {
-    pointer-events: none;
-}
-
-header {
-    text-align: center;
-    display: flex;
-    flex-flow: column nowrap;
-    align-items: center;
-    position: relative;
-    pointer-events: none;
-}
-
-.column__title {
-    display: inline-block;
-    padding: 10px 20px;
-    font-size: 1.25em;
-    user-select: none;
-}
-
-button {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 100%;
-    position: relative !important;
-    box-shadow: 0 0 3px #000;
-    border: none;
-    outline: none;
-    pointer-events: all;
-    z-index: 1;
-    background-color: #fff;
-    cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    user-select: none;
-    &:hover {
-        background-color: #C5CAE9;
+g.column {
+    header {
+        text-align: center;
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
+        position: relative;
+        pointer-events: none;
     }
-}
-
-.column rect {
-    cursor: pointer;
-    user-select: none;
-}
-
-text,
-tspan {
-    pointer-events: none;
-}
-
-.column g[data-selected] rect {
-    stroke-dasharray: 4;
-    pointer-events: all;
+    .column__title {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 1.25em;
+        user-select: none;
+    }
+    button {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 100%;
+        position: relative !important;
+        box-shadow: 0 0 3px #000;
+        border: none;
+        outline: none;
+        pointer-events: all;
+        z-index: 1;
+        background-color: #fff;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        user-select: none;
+        &:hover {
+            background-color: #C5CAE9;
+        }
+    }
+    rect {
+        cursor: pointer;
+        user-select: none;
+    }
+    text,
+    tspan {
+        pointer-events: none;
+    }
+    g[data-selected] rect {
+        stroke-dasharray: 4;
+        pointer-events: all;
+    }
+    g[data-highlighted],
+    g[data-highlighted] foreignObject {
+        opacity: 1 !important;
+        stroke-opacity: 1;
+    }
+    foreignObject {
+        pointer-events: none;
+    }
 }

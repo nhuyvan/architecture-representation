@@ -2,7 +2,7 @@ import { Component, ViewChild, ElementRef, Input, OnChanges, ViewEncapsulation, 
 
 import { createSvgElement } from '../../utils';
 import { Link } from '../../models/Link';
-import { Column } from 'app/canvas/models/Column';
+import { Column } from '../../models/Column';
 import { Cell } from '../../models/Cell';
 
 @Component({
@@ -14,7 +14,7 @@ import { Cell } from '../../models/Cell';
 export class LinksComponent implements OnChanges, AfterViewInit {
 
   @Input()
-  links: Map<Cell, Link[]>;
+  links: Link[];
 
   @Input()
   columns: Column;
@@ -24,26 +24,25 @@ export class LinksComponent implements OnChanges, AfterViewInit {
 
   @ViewChild('links')
   private _linksRef: ElementRef<SVGGElement>;
-  private _wrapper: SVGElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  private _wrapper: SVGElement;
 
   constructor() {
   }
 
   ngAfterViewInit() {
+    this._wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g')
     this._linksRef.nativeElement.appendChild(this._wrapper);
   }
 
   ngOnChanges() {
-    if (this._linksRef && this.links && this.columns) {
+    if (this._linksRef && this.links && this.columns && this._wrapper) {
       this._linksRef.nativeElement.removeChild(this._wrapper);
       this._wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      this.links.forEach(links => {
-        for (const link of links) {
-          this._drawLink(link);
-          this._unhighlightCell(link.source);
-          this._unhighlightCell(link.target);
-        }
-      });
+      for (const link of this.links) {
+        this._renderLink(link);
+        this._unhighlightCell(link.source);
+        this._unhighlightCell(link.target);
+      }
       this._linksRef.nativeElement.appendChild(this._wrapper);
     }
   }
@@ -66,9 +65,9 @@ export class LinksComponent implements OnChanges, AfterViewInit {
 
   }
 
-  private _drawLink(link: Link) {
-    const source = this._findCellInColumn(link.source);
-    const target = this._findCellInColumn(link.target);
+  private _renderLink(link: Link) {
+    const source = link.source;
+    const target = link.target;
     const y1 = source.top + source.height / 2;
     const y2 = target.top + target.height / 2;
     const line = createSvgElement('line', {
@@ -89,18 +88,14 @@ export class LinksComponent implements OnChanges, AfterViewInit {
       'stroke-width': '10px',
       class: 'link-selection-handle'
     });
-    const container = createSvgElement('g', { id: `${link.source.id}_${link.target.id}` }, { __link__: link });
+    const container = createSvgElement('g', { id: `${link.source.idSelector}_${link.target.idSelector}` }, { __link__: link });
     container.appendChild(line);
     container.appendChild(lineHoverSelectionHandle);
     this._wrapper.appendChild(container);
   }
 
-  private _findCellInColumn(cell: Cell): ClientRect {
-    return this.columns[cell.dataset.columnPrefix].get(cell);
-  }
-
-  private _unhighlightCell(cell: SVGElement) {
-    cell.removeAttribute('data-selected');
+  private _unhighlightCell(cell: Cell) {
+    document.querySelector(`#${cell.idSelector}`).removeAttribute('data-selected');
   }
 
 }

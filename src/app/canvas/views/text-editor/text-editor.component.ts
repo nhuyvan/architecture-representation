@@ -2,6 +2,8 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 
+import { Cell } from '../../models/Cell';
+
 @Component({
   templateUrl: './text-editor.component.html',
   styleUrls: ['./text-editor.component.scss']
@@ -17,11 +19,12 @@ export class TextEditorComponent {
     this._textInput.pipe(take(1));
   }
 
-  snapEditorToCellBoundary(cellGeometry: ClientRect) {
-    this._input.nativeElement.style.left = cellGeometry.left + 2 + 'px';
-    this._input.nativeElement.style.top = cellGeometry.top + 'px';
-    this._input.nativeElement.style.width = cellGeometry.width - 4 + 'px';
-    this._input.nativeElement.style.height = cellGeometry.height - 2 + 'px';
+  snapEditorToCellBoundary(cell: Cell) {
+    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+    this._input.nativeElement.style.left = cell.left + 2 + 'px';
+    this._input.nativeElement.style.top = cell.top - scrollTop + 2 + 'px';
+    this._input.nativeElement.style.width = cell.width - 4 + 'px';
+    this._input.nativeElement.style.height = cell.height - 4 + 'px';
     this._input.nativeElement.style.whiteSpace = 'pre';
     this._input.nativeElement.style.textAlign = 'center';
     this._input.nativeElement.style.display = 'flex';
@@ -31,7 +34,7 @@ export class TextEditorComponent {
 
   moveIntoViewIfOverflowsOffscreen(event: KeyboardEvent) {
     event.stopPropagation();
-    if (event.key === 'Backspace') {
+    if (event.key === 'Enter') {
       const inputElementBottom = this._input.nativeElement.firstElementChild.getBoundingClientRect().bottom;
       if (Math.abs(inputElementBottom - document.body.clientHeight) < 20)
         (this._input.nativeElement.firstElementChild as HTMLDivElement).style.bottom = '0';

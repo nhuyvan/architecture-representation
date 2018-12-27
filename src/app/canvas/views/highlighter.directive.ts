@@ -15,7 +15,7 @@ export class HighlighterDirective implements OnChanges {
   selectedCell: Cell;
 
   @Input()
-  existingLinks: Map<Cell, Link[]>;
+  existingLinks: Link[];
 
   constructor(@Host() private _canvas: ElementRef<SVGElement>) { }
 
@@ -24,26 +24,22 @@ export class HighlighterDirective implements OnChanges {
       if (changes.selectedCell.currentValue) {
         this._highlightCell(changes.selectedCell.currentValue);
         if (this.existingLinks)
-          this.existingLinks.forEach(links => {
-            for (const link of links)
-              if ([link.source, link.target].includes(changes.selectedCell.currentValue)) {
-                this._highlightCell(link.source);
-                this._highlightCell(link.target);
-                this._highlightLink(link);
-              }
-          });
+          for (const link of this.existingLinks)
+            if ([link.source, link.target].includes(changes.selectedCell.currentValue)) {
+              this._highlightCell(link.source);
+              this._highlightCell(link.target);
+              this._highlightLink(link);
+            }
       }
       else if (changes.selectedCell.previousValue) {
         this._unhighlightCell(changes.selectedCell.previousValue);
         if (this.existingLinks)
-          this.existingLinks.forEach(links => {
-            for (const link of links)
-              if ([link.source, link.target].includes(changes.selectedCell.previousValue)) {
-                this._unhighlightCell(link.source);
-                this._unhighlightCell(link.target);
-                this._unhighlightLink(link);
-              }
-          });
+          for (const link of this.existingLinks)
+            if ([link.source, link.target].includes(changes.selectedCell.previousValue)) {
+              this._unhighlightCell(link.source);
+              this._unhighlightCell(link.target);
+              this._unhighlightLink(link);
+            }
       }
     }
 
@@ -63,25 +59,24 @@ export class HighlighterDirective implements OnChanges {
 
   private _highlightCell(cell: Cell) {
     this._canvas.nativeElement.classList.add('highlighting');
-    cell.style.strokeOpacity = '1';
-    cell.querySelector('foreignObject').style.opacity = '1';
+    const cellDomElement = document.querySelector(`svg #${cell.idSelector}`) as SVGGElement;
+    cellDomElement.setAttribute('data-highlighted', '');
   }
 
   private _unhighlightCell(cell: Cell) {
     this._canvas.nativeElement.classList.remove('highlighting');
-    cell.style.strokeOpacity = null;
-    cell.querySelector('foreignObject').style.opacity = null;
+    const cellDomElement = document.querySelector(`svg #${cell.idSelector}`) as SVGGElement;
+    cellDomElement.removeAttribute('data-highlighted');
   }
 
   private _highlightLink(link: Link) {
     this._canvas.nativeElement.classList.add('highlighting');
-    const linkElement = this._canvas.nativeElement.querySelector(`#${link.source.id}_${link.target.id}`) as SVGElement;
-    linkElement.style.strokeOpacity = '1';
+    this._canvas.nativeElement.querySelector(`#${link.source.idSelector}_${link.target.idSelector}`).setAttribute('data-highlighted', '');
   }
 
   private _unhighlightLink(link: Link) {
     this._canvas.nativeElement.classList.remove('highlighting');
-    const linkElement = this._canvas.nativeElement.querySelector(`#${link.source.id}_${link.target.id}`) as SVGElement;
-    linkElement.style.strokeOpacity = null;
+    this._canvas.nativeElement.querySelector(`#${link.source.idSelector}_${link.target.idSelector}`).removeAttribute('data-highlighted');
   }
+
 }

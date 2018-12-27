@@ -10,3 +10,7 @@
     stroke-width: 4;
     stroke-opacity: 1;
 }
+
+.links g[data-highlighted] .link {
+    stroke-opacity: 1
+}

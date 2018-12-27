@@ -1,8 +1,8 @@
 <svg:g #column
        [attr.transform]='"translate(" + left + ", 0)"'
        class='column'
-       (click)='onCellClicked($event)'
-       (dblclick)='showTextEditor($event)'>
+       (click)='onCellClicked($event.target.parentElement)'
+       (dblclick)='showTextEditor($event.target.parentElement)'>
     <foreignObject [attr.width]='width'
                    [attr.height]='headerHeight'
                    x='0'
@@ -15,7 +15,7 @@
             <div>
                 <button class='icon-container'
                         tooltip='Add a new cell'
-                        (click)='addCell($event)'
+                        (click)='addCell()'
                         style='margin-right: 5px'>
                     <i class='material-icons'>add</i>
                 </button>

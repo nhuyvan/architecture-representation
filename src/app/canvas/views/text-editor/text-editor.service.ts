@@ -2,6 +2,7 @@ import { Injectable, ComponentFactoryResolver, Injector, ApplicationRef, Compone
 import { DomPortalOutlet, ComponentPortal, PortalOutlet } from '@angular/cdk/portal';
 
 import { TextEditorComponent } from './text-editor.component';
+import { Cell } from '../../models/Cell';
 
 @Injectable({
   providedIn: 'root'
@@ -17,29 +18,32 @@ export class TextEditorService {
     private _appRef: ApplicationRef
   ) { }
 
-  show(cellGeometry: ClientRect, initialText = '') {
-    const outlet = this._createTextEditorComponent(cellGeometry, initialText);
-    return new TextEditorComponentRef(this._textEditor.instance, outlet);
+  show(cell: Cell) {
+    const outlet = this._createTextEditorComponent(cell);
+    return new TextEditorComponentRef(cell, this._textEditor.instance, outlet);
   }
 
-  private _createTextEditorComponent(cellGeometry: ClientRect, initialText: string): PortalOutlet {
+  private _createTextEditorComponent(cell: Cell): PortalOutlet {
     const textEditorContainer = document.createElement('div');
     const emptyOutlet = new DomPortalOutlet(textEditorContainer, this._componentFactoryResolver, this._appRef, this._injector);
     this._textEditor = emptyOutlet.attachComponentPortal(this._textEditorPortal);
     document.body.appendChild(textEditorContainer);
-    this._textEditor.instance.snapEditorToCellBoundary(cellGeometry);
-    this._textEditor.instance.beginEditing(initialText);
+    this._textEditor.instance.snapEditorToCellBoundary(cell);
+    this._textEditor.instance.beginEditing(cell.text);
     return emptyOutlet;
   }
 }
 
 export class TextEditorComponentRef {
-  constructor(private readonly _editorComponent: TextEditorComponent, private readonly _portalOutlet: PortalOutlet) { }
+  constructor(
+    private readonly _cell: Cell,
+    private readonly _editorComponent: TextEditorComponent,
+    private readonly _portalOutlet: PortalOutlet) { }
 
-  textAdded(cb: (text: string) => void) {
+  textAdded(cb: (text: string, cellBeingEdited: Cell) => void) {
     return this._editorComponent.finishEditing()
       .subscribe(text => {
-        cb(text);
+        cb(text, this._cell);
         this._dismiss();
       });
   }
