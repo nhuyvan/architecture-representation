@@ -3,7 +3,7 @@ import { Component, ViewChild, ElementRef, Input, OnChanges, ViewEncapsulation, 
 import { createSvgElement } from '../../utils';
 import { Link } from '../../models/Link';
 import { Column } from '../../models/Column';
-import { Cell } from '../../models/Cell';
+import { ColorService } from '../../services/color.service';
 
 @Component({
   selector: '[links]',
@@ -26,7 +26,7 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   private _linksRef: ElementRef<SVGGElement>;
   private _wrapper: SVGElement;
 
-  constructor() {
+  constructor(private _colorService: ColorService) {
   }
 
   ngAfterViewInit() {
@@ -53,19 +53,21 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   private _renderLink(link: Link) {
     const source = link.source;
     const target = link.target;
+    const x1 = source.left + source.width;
     const y1 = source.top + source.height / 2;
     const y2 = target.top + target.height / 2;
+
     const line = createSvgElement('line', {
-      x1: source.left + source.width,
+      x1,
       y1,
       x2: target.left,
       y2,
-      stroke: '#000',
+      stroke: this._colorService.generateLinkColorForId(source.id),
       'stroke-width': '1px',
       class: 'link'
     });
     const lineHoverSelectionHandle = createSvgElement('line', {
-      x1: source.left + source.width,
+      x1,
       y1,
       x2: target.left,
       y2,
