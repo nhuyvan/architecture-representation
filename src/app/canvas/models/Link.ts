@@ -4,4 +4,5 @@ export interface Link {
   source: Cell;
   target: Cell;
   idSelector: string;
+  weight: string;
 }

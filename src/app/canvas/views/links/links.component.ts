@@ -1,9 +1,12 @@
 import { Component, ViewChild, ElementRef, Input, OnChanges, ViewEncapsulation, Output, EventEmitter, AfterViewInit } from '@angular/core';
 
+import { TooltipService } from '@shared/views/tooltip/tooltip.service';
 import { createSvgElement } from '../../utils';
 import { Link } from '../../models/Link';
 import { Column } from '../../models/Column';
 import { ColorService } from '../../services/color.service';
+import { TextEditorService } from '../text-editor/text-editor.service';
+import { Cell } from '../../models/Cell';
 
 @Component({
   selector: '[links]',
@@ -26,7 +29,10 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   private _linksRef: ElementRef<SVGGElement>;
   private _wrapper: SVGElement;
 
-  constructor(private _colorService: ColorService) {
+  constructor(
+    private _colorService: ColorService,
+    private _textEditorService: TextEditorService,
+    private _tooltipService: TooltipService) {
   }
 
   ngAfterViewInit() {
@@ -36,6 +42,10 @@ export class LinksComponent implements OnChanges, AfterViewInit {
 
   ngOnChanges() {
     if (this._linksRef && this.linkTable && this.columns && this._wrapper) {
+      // If a link is being hovered and selected at the same time
+      // then it is deleted, the tooltip won't disappear
+      // so hide it if there is a lingering tooltip without no anchor
+      this._tooltipService.hide();
       this._linksRef.nativeElement.removeChild(this._wrapper);
       this._wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       for (const sourceCellSelector in this.linkTable)
@@ -45,9 +55,29 @@ export class LinksComponent implements OnChanges, AfterViewInit {
     }
   }
 
-  selectLink(event: MouseEvent) {
-    const clickedLink = (event.target as SVGElement).parentElement;
-    this.linkSelected.emit(clickedLink.hasAttribute('data-selected') ? null : (clickedLink as any).__link__);
+  showAttributeValueEditor(event: MouseEvent, link: Link) {
+    // 80px x 40px input box
+    const cell = {
+      top: event.clientY - 20,
+      left: event.clientX - 40,
+      width: 80,
+      height: 40,
+      text: link.weight
+    } as Cell;
+    this._textEditorService.show(cell)
+      .textAdded(value => link.weight = String(+value || link.weight));
+  }
+
+  selectLink(clickedItem: any) {
+    this.linkSelected.emit(clickedItem.hasAttribute('data-selected') ? null : clickedItem.__link__);
+  }
+
+  showLinkTooltip(event: MouseEvent, link: Link) {
+    this._tooltipService.showAt(event.clientX, event.clientY, link.weight, 'bottom');
+  }
+
+  hideLinkTooltip() {
+    this._tooltipService.hide();
   }
 
   private _renderLink(link: Link) {

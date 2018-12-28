@@ -1,3 +1,6 @@
 <svg:g #links
-       (click)='selectLink($event)'
+       (click)='selectLink($event.target.parentElement)'
+       (dblclick)='showAttributeValueEditor($event, $event.target.parentElement.__link__)'
+       (mouseover)='showLinkTooltip($event, $event.target.parentElement.__link__)'
+       (mouseout)='hideLinkTooltip()'
        class='links'></svg:g>

@@ -191,7 +191,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       const added = this._addNewLink({
         source: this._sourceCell,
         target: cell,
-        idSelector: this._sourceCell.idSelector + '_' + cell.idSelector
+        idSelector: this._sourceCell.idSelector + '_' + cell.idSelector,
+        weight: '1.0'
       });
       this._unhighlightCell(this._sourceCell);
       this._unhighlightCell(cell);
@@ -217,7 +218,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       const added = this._addNewLink({
         source: this._sourceCell,
         target: cell,
-        idSelector: this._sourceCell.idSelector + '_' + cell.idSelector
+        idSelector: this._sourceCell.idSelector + '_' + cell.idSelector,
+        weight: '1.0'
       });
       if (added) {
         this._notifyLinksChange();
