@@ -20,10 +20,10 @@
                     <i class='material-icons'>add</i>
                 </button>
                 <button class='icon-container'
-                        [tooltip]='(shouldShowConnections() ? "Hide" : "Show") + " connections for selected component"'
-                        (click)='showConnectionsForSelectedComponent($event)'
+                        [tooltip]='(shouldShowAssociations() ? "Hide" : "Show") + " associations for selected component"'
+                        (click)='showAssociationsForSelectedComponent($event)'
                         style='margin-left: 5px'>
-                    <i *ngIf='shouldShowConnections();else show'
+                    <i *ngIf='shouldShowAssociations();else show'
                        class='material-icons'>visibility_off</i>
                     <ng-template #show>
                         <i class='material-icons'>visibility</i>

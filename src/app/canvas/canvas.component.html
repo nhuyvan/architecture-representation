@@ -2,6 +2,7 @@
      highlighter
      [selectedCell]='selectedCell'
      [selectedLink]='selectedLink'
+     [showAssociations]='showAssociations'
      [linkTable]='linkTable'>
     <g column
        [cells]='columns.element'
@@ -13,7 +14,7 @@
        [cellDeleted]='elementCellDeleted'
        (cellAdded)='onCellAdded($event)'
        (cellClicked)='onElementCellClicked($event)'
-       (showConnections)='showConnectionsForSelectedComponent($event)'
+       (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
        (layoutChanged)='onColumnLayoutChanged($event, "element")'></g>
     <g column
        [cells]='columns.property'
@@ -26,7 +27,7 @@
        [cellDeleted]='propertyCellDeleted'
        (cellAdded)='onCellAdded($event)'
        (cellClicked)='onPropertyCellClicked($event)'
-       (showConnections)='showConnectionsForSelectedComponent($event)'
+       (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
        (layoutChanged)='onColumnLayoutChanged($event, "property")'></g>
     <g column
        [cells]='columns.quality'
@@ -39,7 +40,7 @@
        [cellDeleted]='qualityCellDeleted'
        (cellAdded)='onCellAdded($event)'
        (cellClicked)='onQualityCellClicked($event)'
-       (showConnections)='showConnectionsForSelectedComponent($event)'
+       (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
        (layoutChanged)='onColumnLayoutChanged($event, "quality")'></g>
     <g links
        [linkTable]='linkTable'

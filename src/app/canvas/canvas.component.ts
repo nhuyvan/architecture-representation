@@ -28,13 +28,12 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   elementCellDeleted: Cell;
   propertyCellDeleted: Cell;
   qualityCellDeleted: Cell;
+  showAssociations = false;
 
   @ViewChild('canvas')
   private _canvasRef: ElementRef<SVGSVGElement>;
   private _canvasRect: ClientRect;
   private _sourceCell: Cell;
-  private _selectedCell: Cell;
-  private _selectedLink: Link;
 
   constructor(private _changeDetector: ChangeDetectorRef) { }
 
@@ -57,22 +56,22 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   @HostListener('window:keydown', ['$event'])
   onKeyPressed(event: KeyboardEvent) {
     if (event.key === 'Backspace' || event.key === 'Delete') {
-      if (this._selectedCell) {
-        switch (this._selectedCell.column) {
+      if (this.selectedCell) {
+        switch (this.selectedCell.column) {
           case 'element':
-            this.elementCellDeleted = this._selectedCell;
+            this.elementCellDeleted = this.selectedCell;
             break;
           case 'property':
-            this.propertyCellDeleted = this._selectedCell;
+            this.propertyCellDeleted = this.selectedCell;
             break;
           case 'quality':
-            this.qualityCellDeleted = this._selectedCell;
+            this.qualityCellDeleted = this.selectedCell;
         }
-        this._deleteCell(this._selectedCell);
+        this._deleteCell(this.selectedCell);
         this._notifyLinksChange();
       }
-      else if (this._selectedLink) {
-        this._deleteLink(this._selectedLink);
+      else if (this.selectedLink) {
+        this._deleteLink(this.selectedLink);
         this._notifyLinksChange();
       }
     }
@@ -85,7 +84,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       for (const link of this.linkTable[sourceCell])
         if (link.target === cellToDelete)
           this._deleteLink(link);
-    this._selectedCell = null;
     this.selectedCell = null;
     this._sourceCell = null;
   }
@@ -101,7 +99,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
   private _deleteLink(link: Link) {
     this.linkTable[link.source.idSelector] = this.linkTable[link.source.idSelector].filter(e => e !== link);
-    this._selectedLink = null;
     this.selectedLink = null;
   }
 
@@ -163,20 +160,13 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     this.linkTable = { ...this.linkTable };
   }
 
-  showConnectionsForSelectedComponent(state: boolean) {
-    if (state) {
-      this.selectedCell = this._selectedCell;
-      this.selectedLink = this._selectedLink;
-    }
-    else {
-      this.selectedCell = null;
-      this.selectedLink = null;
-    }
+  toggleAssociationsForSelectedComponent(state: boolean) {
+    this.showAssociations = state;
   }
 
   onLinkSelected(link: Link) {
-    this._selectedLink = link;
-    this._selectedCell = null;
+    this.selectedLink = link;
+    this.selectedCell = null;
     this._sourceCell = null;
   }
 
@@ -187,53 +177,74 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
   onElementCellClicked(cell: Cell) {
     this._sourceCell = this._sourceCell !== cell ? cell : null;
-    this._selectedCell = this._sourceCell;
-    this._selectedLink = null;
+    this.selectedCell = this._sourceCell;
+    this.selectedLink = null;
   }
 
   onPropertyCellClicked(cell: Cell) {
     if (cell === null || cell === this._sourceCell) {
       this._sourceCell = null;
-      this._selectedCell = null;
+      this.selectedCell = null;
     }
+    // Only "element" column can add links to "property" column
     else if (this._sourceCell && this._sourceCell.column !== 'property') {
-      this._addNewLink({
+      const added = this._addNewLink({
         source: this._sourceCell,
-        target: cell
+        target: cell,
+        idSelector: this._sourceCell.idSelector + '_' + cell.idSelector
       });
       this._unhighlightCell(this._sourceCell);
       this._unhighlightCell(cell);
-      this._notifyLinksChange();
-      this._sourceCell = null;
-      this._selectedCell = null;
+      if (added) {
+        this._notifyLinksChange();
+        this._sourceCell = null;
+        this.selectedCell = null;
+      }
+      // If there is a link already exists between the source and target
+      // Then highlight the target cell
+      else
+        this.selectedCell = cell;
     }
     else {
       this._sourceCell = cell;
-      this._selectedCell = this._sourceCell;
+      this.selectedCell = this._sourceCell;
     }
-    this._selectedLink = null;
+    this.selectedLink = null;
   }
 
   onQualityCellClicked(cell: Cell) {
     if (this._sourceCell && this._sourceCell.column !== 'element') {
-      this._addNewLink({
+      const added = this._addNewLink({
         source: this._sourceCell,
-        target: cell
+        target: cell,
+        idSelector: this._sourceCell.idSelector + '_' + cell.idSelector
       });
-      this._notifyLinksChange();
-      this._unhighlightCell(this._sourceCell);
-      this._unhighlightCell(cell);
+      if (added) {
+        this._notifyLinksChange();
+        this._unhighlightCell(this._sourceCell);
+        this._unhighlightCell(cell);
+        this.selectedCell = null;
+      }
+      // If there is a link already exists between the source and target
+      // Then highlight the target cell
+      else
+        this.selectedCell = cell;
     }
-    this._selectedCell = !this._sourceCell ? cell : null;
-    this._selectedLink = null;
+    this.selectedCell = cell;
+    this.selectedLink = null;
     this._sourceCell = null;
   }
 
   private _addNewLink(link: Link) {
-    if (!(link.source.idSelector in this.linkTable))
+    if (!(link.source.idSelector in this.linkTable)) {
       this.linkTable[link.source.idSelector] = [link];
-    else if (!this._linkExists(this.linkTable[link.source.idSelector], link))
+      return true;
+    }
+    else if (!this._linkExists(this.linkTable[link.source.idSelector], link)) {
       this.linkTable[link.source.idSelector].push(link);
+      return true;
+    }
+    return false;
   }
 
   private _linkExists(links: Link[], newLink: Link) {

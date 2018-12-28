@@ -46,7 +46,7 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
   cellClicked = new EventEmitter<Cell>();
 
   @Output()
-  showConnections = new EventEmitter<boolean>();
+  showAssociationsToggled = new EventEmitter<boolean>();
 
   @Output()
   layoutChanged = new EventEmitter<ColumnLayoutChange>();
@@ -61,7 +61,7 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
   private _cellDomElements: Array<SVGGElement> = [];
   private readonly _defaultCellHeight = 50;
   private readonly _minimumSpacingBetweenCells = 5;
-  private static _isShowingConnections = false;
+  private static _isShowingAssociations = false;
 
   constructor(private _tooltipService: TooltipService, private _textEditorService: TextEditorService) { }
 
@@ -104,15 +104,15 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
     this._column = this._columnRef.nativeElement;
   }
 
-  showConnectionsForSelectedComponent(event: MouseEvent) {
+  showAssociationsForSelectedComponent(event: MouseEvent) {
     event.stopPropagation();
-    ColumnComponent._isShowingConnections = !ColumnComponent._isShowingConnections;
+    ColumnComponent._isShowingAssociations = !ColumnComponent._isShowingAssociations;
     this._tooltipService.hide();
-    this.showConnections.emit(ColumnComponent._isShowingConnections);
+    this.showAssociationsToggled.emit(ColumnComponent._isShowingAssociations);
   }
 
-  shouldShowConnections() {
-    return ColumnComponent._isShowingConnections;
+  shouldShowAssociations() {
+    return ColumnComponent._isShowingAssociations;
   }
 
   showTextEditor(target: HTMLElement | SVGGElement) {
@@ -206,7 +206,9 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
         id: cell.idSelector,
         'data-id': cell.id,
         'data-column-prefix': cell.column,
-        'data-cell': 'true'
+        'data-cell': 'true',
+        transform: `translate(${this._marginLeft}, ${this.height})`,
+        class: 'cell'
       }) as SVGGElement;
     cellContainer.appendChild(cellElement);
     this._column.appendChild(cellContainer);
@@ -230,27 +232,11 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
   }
 
   onCellClicked(target: HTMLElement | SVGElement) {
-    if (target.hasAttribute('data-cell'))
-      this.cellClicked.emit(this._toggleHighlightCell(this.cells[+target.dataset.id]));
-  }
-
-  private _toggleHighlightCell(cell: Cell): Cell {
-    const cellDomElement = this._cellDomElements[cell.id];
-    document.querySelectorAll('svg g[data-selected]')
-      .forEach(hightlightedCell => {
-        if (cellDomElement !== hightlightedCell)
-          hightlightedCell.removeAttribute('data-selected');
-      });
-
-    if (cellDomElement.hasAttribute('data-selected')) {
-      cellDomElement.removeAttribute('data-selected');
-      ColumnComponent._isShowingConnections = false;
-      this.showConnections.emit(false);
-      return null;
-    }
-    else {
-      cellDomElement.setAttribute('data-selected', '');
-      return cell;
+    if (target.hasAttribute('data-cell')) {
+      const cell = this.cells[+target.dataset.id];
+      const cellDomElement = this._cellDomElements[cell.id];
+      ColumnComponent._isShowingAssociations = false;
+      this.cellClicked.emit(cellDomElement.hasAttribute('data-selected') ? null : cell);
     }
   }
 

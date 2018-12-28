@@ -42,6 +42,9 @@ g.column {
     tspan {
         pointer-events: none;
     }
+    g.cell {
+        transition: transform 0.2s ease;
+    }
     g[data-selected] rect {
         stroke-dasharray: 4;
         pointer-events: all;

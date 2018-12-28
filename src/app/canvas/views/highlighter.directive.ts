@@ -17,49 +17,69 @@ export class HighlighterDirective implements OnChanges {
   @Input()
   linkTable: { [sourceCellSelector: string]: Link[] };
 
+  @Input()
+  showAssociations = false;
+
   constructor(@Host() private _canvas: ElementRef<SVGElement>) { }
 
   ngOnChanges(changes: SimpleChanges) {
     // Highlight/unhighlight the selected cell, and all the links coming out of it
     // or into it, and also directly or indirectly linked cells to the selected cell
     if ('selectedCell' in changes) {
-      if (this.selectedCell) {
-        this._highlightCell(this.selectedCell);
-        this._forEachLink(link => {
-          if (link.source === this.selectedCell || link.target === this.selectedCell) {
-            this._highlightCell(link.source);
-            this._highlightCell(link.target);
-            this._highlightLink(link);
-          }
-        });
-      }
-      else if (changes.selectedCell.previousValue) {
-        const previousCell = changes.selectedCell.previousValue;
-        this._unhighlightCell(previousCell);
-        this._forEachLink(link => {
-          if (link.source === previousCell || link.target === previousCell) {
-            this._unhighlightCell(link.source);
-            this._unhighlightCell(link.target);
-            this._unhighlightLink(link);
-          }
-        });
-      }
+      if (changes.selectedCell.currentValue)
+        this._selectCell(changes.selectedCell.currentValue);
+      else if (changes.selectedCell.previousValue)
+        this._deselectCell(changes.selectedCell.previousValue);
     }
 
     if ('selectedLink' in changes) {
-      if (changes.selectedLink.currentValue) {
-        this._highlightCell(changes.selectedLink.currentValue.source);
-        this._highlightCell(changes.selectedLink.currentValue.target);
-        this._highlightLink(changes.selectedLink.currentValue);
+      if (changes.selectedLink.currentValue)
+        this._selectLink(changes.selectedLink.currentValue);
+      else if (changes.selectedLink.previousValue)
+        this._deselectLink(changes.selectedLink.previousValue);
+    }
+
+    else if ('showAssociations' in changes) {
+      if (changes.showAssociations.currentValue) {
+        if (this.selectedCell)
+          this._highlightCellAndItsAssociations(this.selectedCell);
+        else if (this.selectedLink) {
+          this._highlightCell(this.selectedLink.source);
+          this._highlightCell(this.selectedLink.target);
+        }
       }
-      else if (changes.selectedLink.previousValue) {
-        this._unhighlightCell(changes.selectedLink.previousValue.source);
-        this._unhighlightCell(changes.selectedLink.previousValue.target);
-        this._unhighlightLink(changes.selectedLink.previousValue);
+      else {
+        if (this.selectedCell)
+          this._unhighlightCellAndItsAssociations(this.selectedCell);
+        else if (this.selectedLink) {
+          this._unhighlightCell(this.selectedLink.source);
+          this._unhighlightCell(this.selectedLink.target);
+        }
       }
     }
   }
 
+  private _highlightCellAndItsAssociations(cell: Cell) {
+    this._highlightCell(cell);
+    this._forEachLink(link => {
+      if (link.source === cell || link.target === cell) {
+        this._highlightCell(link.source);
+        this._highlightCell(link.target);
+        this._highlightLink(link);
+      }
+    });
+  }
+
+  private _unhighlightCellAndItsAssociations(cell: Cell) {
+    this._unhighlightCell(cell);
+    this._forEachLink(link => {
+      if (link.source === cell || link.target === cell) {
+        this._unhighlightCell(link.source);
+        this._unhighlightCell(link.target);
+        this._unhighlightLink(link);
+      }
+    });
+  }
   private _forEachLink(action: (link: Link) => void) {
     if (this.linkTable)
       for (const sourceCellSelector in this.linkTable)
@@ -67,26 +87,58 @@ export class HighlighterDirective implements OnChanges {
           action(link);
   }
 
+  private _selectCell(cell: Cell) {
+    this._deselectPreviousSelectedElements(cell);
+    document.querySelector(`#${cell.idSelector}`)
+      .setAttribute('data-selected', '');
+  }
+
+  private _deselectCell(cell: Cell) {
+    document.querySelector(`#${cell.idSelector}`)
+      .removeAttribute('data-selected');
+  }
+
+  private _selectLink(link: Link) {
+    this._deselectPreviousSelectedElements(link);
+    document.querySelector(`#${link.idSelector}`)
+      .setAttribute('data-selected', '');
+  }
+
+  private _deselectLink(link: Link) {
+    document.querySelector(`#${link.idSelector}`)
+      .removeAttribute('data-selected');
+  }
+
+  private _deselectPreviousSelectedElements(item: Cell | Link) {
+    document.querySelectorAll('svg g[data-selected]')
+      .forEach(previousSelectedElement => {
+        if (item.idSelector !== previousSelectedElement.id)
+          previousSelectedElement.removeAttribute('data-selected');
+      });
+  }
+
   private _highlightCell(cell: Cell) {
     this._canvas.nativeElement.classList.add('highlighting');
-    const cellDomElement = document.querySelector(`svg #${cell.idSelector}`) as SVGGElement;
-    cellDomElement.setAttribute('data-highlighted', '');
+    document.querySelector(`svg #${cell.idSelector}`)
+      .setAttribute('data-highlighted', '');
   }
 
   private _unhighlightCell(cell: Cell) {
     this._canvas.nativeElement.classList.remove('highlighting');
-    const cellDomElement = document.querySelector(`svg #${cell.idSelector}`) as SVGGElement;
-    cellDomElement.removeAttribute('data-highlighted');
+    document.querySelector(`svg #${cell.idSelector}`)
+      .removeAttribute('data-highlighted');
   }
 
   private _highlightLink(link: Link) {
     this._canvas.nativeElement.classList.add('highlighting');
-    this._canvas.nativeElement.querySelector(`#${link.source.idSelector}_${link.target.idSelector}`).setAttribute('data-highlighted', '');
+    this._canvas.nativeElement.querySelector(`#${link.idSelector}`)
+      .setAttribute('data-highlighted', '');
   }
 
   private _unhighlightLink(link: Link) {
     this._canvas.nativeElement.classList.remove('highlighting');
-    this._canvas.nativeElement.querySelector(`#${link.source.idSelector}_${link.target.idSelector}`).removeAttribute('data-highlighted');
+    this._canvas.nativeElement.querySelector(`#${link.idSelector}`)
+      .removeAttribute('data-highlighted');
   }
 
 }

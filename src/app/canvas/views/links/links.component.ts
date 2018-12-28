@@ -47,20 +47,7 @@ export class LinksComponent implements OnChanges, AfterViewInit {
 
   selectLink(event: MouseEvent) {
     const clickedLink = (event.target as SVGElement).parentElement;
-    const selectedItems = document.querySelectorAll('svg g[data-selected]');
-    selectedItems.forEach(item => {
-      if (item !== clickedLink)
-        item.removeAttribute('data-selected');
-    });
-    if (clickedLink.hasAttribute('data-selected')) {
-      clickedLink.removeAttribute('data-selected');
-      this.linkSelected.emit(null);
-    }
-    else {
-      clickedLink.setAttribute('data-selected', 'selected');
-      this.linkSelected.emit((clickedLink as any).__link__);
-    }
-
+    this.linkSelected.emit(clickedLink.hasAttribute('data-selected') ? null : (clickedLink as any).__link__);
   }
 
   private _renderLink(link: Link) {
@@ -86,7 +73,7 @@ export class LinksComponent implements OnChanges, AfterViewInit {
       'stroke-width': '10px',
       class: 'link-selection-handle'
     });
-    const container = createSvgElement('g', { id: `${link.source.idSelector}_${link.target.idSelector}` }, { __link__: link });
+    const container = createSvgElement('g', { id: link.idSelector }, { __link__: link });
     container.appendChild(line);
     container.appendChild(lineHoverSelectionHandle);
     this._wrapper.appendChild(container);
