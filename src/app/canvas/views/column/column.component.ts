@@ -133,9 +133,12 @@ export class ColumnComponent implements OnChanges, AfterViewInit {
       this._centerCellsInColumn(this.cells);
       this._notifyLayoutChange(
         cellBeingEdited.column,
-        heightDifference < 0 ? ColumnLayoutChangeType.CELL_HEIGHT_REDUCED : ColumnLayoutChangeType.CELL_HEIGHT_INCREASED
+        heightDifference < 0 ? ColumnLayoutChangeType.CELL_HEIGHT_DECREASED : ColumnLayoutChangeType.CELL_HEIGHT_INCREASED
       );
     }
+    else
+      this._notifyLayoutChange(cellBeingEdited.column, ColumnLayoutChangeType.CELL_HEIGHT_UNCHANGED);
+
     cellBeingEdited.text = resetOnClick ? '' : text;
     this._cellDomElements[cellBeingEdited.id].removeAttribute('data-selected');
   }

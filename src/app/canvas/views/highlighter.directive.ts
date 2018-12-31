@@ -15,7 +15,7 @@ export class HighlighterDirective implements OnChanges {
   selectedCell: Cell;
 
   @Input()
-  linkTable: { [sourceCellSelector: string]: Link[] };
+  linkTable: Map<Cell, Array<Link>>;
 
   @Input()
   showAssociations = false;
@@ -39,7 +39,7 @@ export class HighlighterDirective implements OnChanges {
         this._deselectLink(changes.selectedLink.previousValue);
     }
 
-    else if ('showAssociations' in changes) {
+    if ('showAssociations' in changes) {
       if (changes.showAssociations.currentValue) {
         if (this.selectedCell)
           this._highlightCellAndItsAssociations(this.selectedCell);
@@ -82,9 +82,10 @@ export class HighlighterDirective implements OnChanges {
   }
   private _forEachLink(action: (link: Link) => void) {
     if (this.linkTable)
-      for (const sourceCellSelector in this.linkTable)
-        for (const link of this.linkTable[sourceCellSelector])
+      this.linkTable.forEach(links => {
+        for (const link of links)
           action(link);
+      });
   }
 
   private _selectCell(cell: Cell) {

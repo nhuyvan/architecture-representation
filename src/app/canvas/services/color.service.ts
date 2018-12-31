@@ -7,18 +7,22 @@ type Color = { r: number; g: number; b: number };
 })
 export class ColorService {
 
-  private readonly _idToColor: { [id: number]: string } = {};
+  private readonly _idToColor: { [id: string]: string } = {};
   private readonly _colors: Color[] = [];
 
   constructor() { }
 
-  generateLinkColorForId(id: number): string {
-    if (!(id in this._idToColor)) {
+  updateColorForIdSelector(idSelector: string, color: string) {
+    this._idToColor[idSelector] = color;
+  }
+
+  generateLinkColorForIdSelector(idSelector: string): string {
+    if (!(idSelector in this._idToColor)) {
       const color = this._generateNextNonSimilarShadeColor();
       this._colors.push(color);
-      this._idToColor[id] = this._generateRgbString(color);
+      this._idToColor[idSelector] = this._generateRgbString(color);
     }
-    return this._idToColor[id];
+    return this._idToColor[idSelector];
   }
 
   private _generateNextNonSimilarShadeColor(): Color {

@@ -7,15 +7,16 @@ svg {
 
 svg.highlighting g.column {
     stroke-opacity: 0.01;
-    pointer-events: none;
 }
 
 svg.highlighting g.links {
     stroke-opacity: 0.02;
-    pointer-events: none;
 }
 
 svg.highlighting g.column g foreignObject {
     opacity: 0.02;
-    pointer-events: none;
+}
+
+svg.highlighting g {
+    pointer-events: none !important;
 }

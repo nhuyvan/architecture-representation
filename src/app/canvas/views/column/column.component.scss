@@ -38,16 +38,11 @@ g.column {
         cursor: pointer;
         user-select: none;
     }
-    text,
-    tspan {
-        pointer-events: none;
-    }
     g.cell {
         transition: transform 0.2s ease;
     }
     g[data-selected] rect {
         stroke-dasharray: 4;
-        pointer-events: all;
     }
     g[data-highlighted],
     g[data-highlighted] foreignObject {
@@ -56,5 +51,6 @@ g.column {
     }
     foreignObject {
         pointer-events: none;
+        user-select: none;
     }
 }

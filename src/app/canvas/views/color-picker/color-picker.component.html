@@ -1,0 +1,6 @@
+<div #colorPicker
+     class='color-picker'>
+    <input type='color'
+           (change)='selectColor($event.target.value)'
+           value='{{initialColor}}' />
+</div>

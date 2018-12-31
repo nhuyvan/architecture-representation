@@ -24,10 +24,11 @@ export class TextEditorService {
   }
 
   private _createTextEditorComponent(cell: Cell): PortalOutlet {
-    const textEditorContainer = document.createElement('div');
-    const emptyOutlet = new DomPortalOutlet(textEditorContainer, this._componentFactoryResolver, this._appRef, this._injector);
+    const overlay = document.createElement('div');
+    overlay.classList.add('overlay')
+    const emptyOutlet = new DomPortalOutlet(overlay, this._componentFactoryResolver, this._appRef, this._injector);
     this._textEditor = emptyOutlet.attachComponentPortal(this._textEditorPortal);
-    document.body.appendChild(textEditorContainer);
+    document.body.appendChild(overlay);
     this._textEditor.instance.snapEditorToCellBoundary(cell);
     this._textEditor.instance.beginEditing(cell.text);
     return emptyOutlet;
