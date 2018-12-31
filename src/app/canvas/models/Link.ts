@@ -5,4 +5,5 @@ export interface Link {
   target: Cell;
   idSelector: string;
   weight: number;
+  domInstance: SVGGElement;
 }

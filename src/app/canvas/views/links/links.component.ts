@@ -27,8 +27,8 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   linkSelected = new EventEmitter<Link>();
 
   @ViewChild('links')
-  private _linksRef: ElementRef<SVGGElement>;
-  private _wrapper: SVGElement;
+  private _linkContainerRef: ElementRef<SVGGElement>;
+  private _wrapper: SVGGElement;
 
   constructor(
     private _colorService: ColorService,
@@ -38,12 +38,12 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this._wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g')
-    this._linksRef.nativeElement.appendChild(this._wrapper);
+    this._wrapper = createSvgElement('g') as SVGGElement;
+    this._linkContainerRef.nativeElement.appendChild(this._wrapper);
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (this._linksRef && !changes.linkTable.firstChange) {
+    if (this._linkContainerRef && !changes.linkTable.firstChange) {
       // If a link is being hovered and selected at the same time
       // then it is deleted, the tooltip won't disappear
       // so hide it if there is a lingering tooltip without no anchor
@@ -53,13 +53,13 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   }
 
   private _renderLinks() {
-    this._linksRef.nativeElement.removeChild(this._wrapper);
-    this._wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this._linkContainerRef.nativeElement.removeChild(this._wrapper);
+    this._wrapper = createSvgElement('g') as SVGGElement;
     this.linkTable.forEach(links => {
       for (const link of links)
         this._renderLink(link);
     });
-    this._linksRef.nativeElement.appendChild(this._wrapper);
+    this._linkContainerRef.nativeElement.appendChild(this._wrapper);
   }
 
   private _renderLink(link: Link) {
@@ -67,37 +67,35 @@ export class LinksComponent implements OnChanges, AfterViewInit {
     const target = link.target;
     const x1 = source.left + source.width;
     const y1 = source.top + source.height / 2;
+    const x2 = target.left;
     const y2 = target.top + target.height / 2;
 
-    const line = createSvgElement('line', {
-      x1,
-      y1,
-      x2: target.left,
-      y2,
-      'stroke-width': '1',
-      class: 'link'
-    });
-    const lineHoverSelectionHandle = createSvgElement('line', {
-      x1,
-      y1,
-      x2: target.left,
-      y2,
-      stroke: 'transparent',
-      class: 'link-selection-handle'
-    });
-    const container = createSvgElement(
-      'g',
-      {
-        id: link.idSelector,
-        stroke: this._colorService.generateLinkColorForIdSelector(source.idSelector),
-        'stroke-width': '10',
-      },
-      {
-        __link__: link
-      });
-    container.appendChild(line);
-    container.appendChild(lineHoverSelectionHandle);
-    this._wrapper.appendChild(container);
+    if (!link.domInstance) {
+      const line = createSvgElement('line', { class: 'link' });
+      const lineHoverSelectionHandle = createSvgElement('line', { class: 'link-selection-handle' });
+      const container = createSvgElement(
+        'g',
+        {
+          id: link.idSelector,
+          stroke: this._colorService.getLinkColorWithSourceCell(source)
+        },
+        {
+          __link__: link
+        }) as SVGGElement;
+      container.appendChild(line);
+      container.appendChild(lineHoverSelectionHandle);
+      link.domInstance = container;
+    }
+    this._repositionLineElement(x1, y1, x2, y2, link.domInstance.firstElementChild as SVGLineElement);
+    this._repositionLineElement(x1, y1, x2, y2, link.domInstance.lastElementChild as SVGLineElement);
+    this._wrapper.appendChild(link.domInstance);
+  }
+
+  private _repositionLineElement(x1: number, y1: number, x2: number, y2: number, line: SVGLineElement) {
+    line.setAttribute('x1', String(x1));
+    line.setAttribute('y1', String(y1));
+    line.setAttribute('x2', String(x2));
+    line.setAttribute('y2', String(y2));
   }
 
   showAttributeValueEditor(event: MouseEvent, link: Link) {
@@ -121,16 +119,15 @@ export class LinksComponent implements OnChanges, AfterViewInit {
       this.linkSelected.emit(link);
       if (event.ctrlKey || event.metaKey) {
         const colorPickerRef = this._colorPickerService.show(event.clientX, event.clientY, clickedItem.getAttribute('stroke'));
-        colorPickerRef.colorSelected(color => this._changeColorForLinksWithCommonSourceCell(link.source, color));
+        colorPickerRef.colorSelected(color => this._changeColorForLinksWithSourceCell(link.source, color));
       }
     }
   }
 
-  private _changeColorForLinksWithCommonSourceCell(sourceCell: Cell, color: string) {
+  private _changeColorForLinksWithSourceCell(sourceCell: Cell, color: string) {
     this.linkTable.get(sourceCell)
-      .map(link => document.querySelector('#' + link.idSelector))
-      .forEach(e => e.setAttribute('stroke', color));
-    this._colorService.updateColorForIdSelector(sourceCell.idSelector, color);
+      .forEach(link => link.domInstance.setAttribute('stroke', color));
+    this._colorService.updateLinkColorWithSourceCell(sourceCell, color);
   }
 
   showLinkTooltip(event: MouseEvent, link: Link) {

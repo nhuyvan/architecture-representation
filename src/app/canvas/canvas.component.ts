@@ -12,7 +12,7 @@ import { ColumnLayoutChange, ColumnLayoutChangeType } from './models/ColumnLayou
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
 })
-export class CanvasComponent implements OnInit, AfterViewInit {
+export class CanvasComponent implements AfterViewInit {
 
   columnWidth = 0;
   columnHeight = 0;
@@ -36,9 +36,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   private _sourceCell: Cell;
 
   constructor(private _changeDetector: ChangeDetectorRef) { }
-
-  ngOnInit() {
-  }
 
   ngAfterViewInit() {
     // ExpressionChangedAfterItHasBeenCheckedError avoidance because this is ngAfterViewInit
@@ -108,7 +105,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   }
 
   private _deleteLink(link: Link) {
-    const updatedLinks = this.linkTable.get(link.source).filter(e => e !== link);
+    const updatedLinks = this.linkTable.get(link.source)
+      .filter(e => e !== link);
     if (updatedLinks.length === 0)
       this.linkTable.delete(link.source);
     else
@@ -247,7 +245,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       target,
       idSelector: source.idSelector + '_' + target.idSelector,
       weight: 1.0,
-      color: ''
+      domInstance: null
     };
   }
 

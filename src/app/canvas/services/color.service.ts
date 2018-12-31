@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Cell } from '../models/Cell';
 
 type Color = { r: number; g: number; b: number };
 
@@ -12,17 +13,17 @@ export class ColorService {
 
   constructor() { }
 
-  updateColorForIdSelector(idSelector: string, color: string) {
-    this._idToColor[idSelector] = color;
+  updateLinkColorWithSourceCell(cell: Cell, color: string) {
+    this._idToColor[cell.id] = color;
   }
 
-  generateLinkColorForIdSelector(idSelector: string): string {
-    if (!(idSelector in this._idToColor)) {
+  getLinkColorWithSourceCell(cell: Cell): string {
+    if (!(cell.id in this._idToColor)) {
       const color = this._generateNextNonSimilarShadeColor();
       this._colors.push(color);
-      this._idToColor[idSelector] = this._generateRgbString(color);
+      this._idToColor[cell.id] = this._generateRgbString(color);
     }
-    return this._idToColor[idSelector];
+    return this._idToColor[cell.id];
   }
 
   private _generateNextNonSimilarShadeColor(): Color {

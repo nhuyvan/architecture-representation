@@ -9,4 +9,5 @@ export interface Cell {
   text: string;
   column: ColumnId;
   idSelector: string;
+  domInstance: SVGGElement;
 }

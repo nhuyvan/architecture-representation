@@ -1,16 +1,23 @@
-.link-selection-handle:hover {
-    cursor: pointer;
+.links {
+    .link-selection-handle {
+        stroke: transparent;
+        stroke-width: 10px;
+        &:hover {
+            cursor: pointer;
+        }
+    }
+    g[data-selected] .link {
+        stroke-width: 4;
+        stroke-opacity: 1;
+    }
+    g[data-highlighted] .link {
+        stroke-opacity: 1
+    }
+    .link {
+        stroke-width: 1px;
+    }
 }
 
 .links.highlighting g:not(.selected) {
     stroke-opacity: 0.1;
-}
-
-.links g[data-selected] .link {
-    stroke-width: 4;
-    stroke-opacity: 1;
-}
-
-.links g[data-highlighted] .link {
-    stroke-opacity: 1
 }

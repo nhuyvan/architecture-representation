@@ -90,24 +90,20 @@ export class HighlighterDirective implements OnChanges {
 
   private _selectCell(cell: Cell) {
     this._deselectPreviousSelectedElements(cell);
-    document.querySelector(`#${cell.idSelector}`)
-      .setAttribute('data-selected', '');
+    cell.domInstance.setAttribute('data-selected', '');
   }
 
   private _deselectCell(cell: Cell) {
-    document.querySelector(`#${cell.idSelector}`)
-      .removeAttribute('data-selected');
+    cell.domInstance.removeAttribute('data-selected');
   }
 
   private _selectLink(link: Link) {
     this._deselectPreviousSelectedElements(link);
-    document.querySelector(`#${link.idSelector}`)
-      .setAttribute('data-selected', '');
+    link.domInstance.setAttribute('data-selected', '');
   }
 
   private _deselectLink(link: Link) {
-    document.querySelector(`#${link.idSelector}`)
-      .removeAttribute('data-selected');
+    link.domInstance.removeAttribute('data-selected');
   }
 
   private _deselectPreviousSelectedElements(item: Cell | Link) {
@@ -120,26 +116,22 @@ export class HighlighterDirective implements OnChanges {
 
   private _highlightCell(cell: Cell) {
     this._canvas.nativeElement.classList.add('highlighting');
-    document.querySelector(`svg #${cell.idSelector}`)
-      .setAttribute('data-highlighted', '');
+    cell.domInstance.setAttribute('data-highlighted', '');
   }
 
   private _unhighlightCell(cell: Cell) {
     this._canvas.nativeElement.classList.remove('highlighting');
-    document.querySelector(`svg #${cell.idSelector}`)
-      .removeAttribute('data-highlighted');
+    cell.domInstance.removeAttribute('data-highlighted');
   }
 
   private _highlightLink(link: Link) {
     this._canvas.nativeElement.classList.add('highlighting');
-    this._canvas.nativeElement.querySelector(`#${link.idSelector}`)
-      .setAttribute('data-highlighted', '');
+    link.domInstance.setAttribute('data-highlighted', '');
   }
 
   private _unhighlightLink(link: Link) {
     this._canvas.nativeElement.classList.remove('highlighting');
-    this._canvas.nativeElement.querySelector(`#${link.idSelector}`)
-      .removeAttribute('data-highlighted');
+    link.domInstance.removeAttribute('data-highlighted');
   }
 
 }
