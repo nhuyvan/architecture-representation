@@ -1,7 +1,7 @@
 <svg:g #column
        [attr.transform]='"translate(" + left + ", 0)"'
        class='column'
-       (click)='onCellClicked($event.target.parentElement)'
+       (click)='onCellClicked($event.target.parentElement, $event)'
        (dblclick)='showTextEditor($event.target.parentElement)'>
     <foreignObject [attr.width]='width'
                    [attr.height]='headerHeight'

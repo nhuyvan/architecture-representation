@@ -1,4 +1,4 @@
-import { Directive, Input, OnChanges, Host, ElementRef, SimpleChanges } from '@angular/core';
+import { Directive, Input, OnChanges, Host, ElementRef, SimpleChanges, IterableDiffer, IterableDiffers } from '@angular/core';
 
 import { Link } from '../models/Link';
 import { Cell } from '../models/Cell';
@@ -12,7 +12,7 @@ export class HighlighterDirective implements OnChanges {
   selectedLink: Link;
 
   @Input()
-  selectedCell: Cell;
+  selectedCells: Cell[] = [];
 
   @Input()
   linkTable: Map<Cell, Array<Link>>;
@@ -20,16 +20,18 @@ export class HighlighterDirective implements OnChanges {
   @Input()
   showAssociations = false;
 
-  constructor(@Host() private _canvas: ElementRef<SVGElement>) { }
+  private _cellArrayDiffer: IterableDiffer<Cell>;
+
+  constructor(@Host() private _canvas: ElementRef<SVGElement>, diffs: IterableDiffers) {
+    this._cellArrayDiffer = diffs.find(this.selectedCells).create();
+  }
 
   ngOnChanges(changes: SimpleChanges) {
-    // Highlight/unhighlight the selected cell, and all the links coming out of it
-    // or into it, and also directly or indirectly linked cells to the selected cell
-    if ('selectedCell' in changes) {
-      if (changes.selectedCell.currentValue)
-        this._selectCell(changes.selectedCell.currentValue);
-      else if (changes.selectedCell.previousValue)
-        this._deselectCell(changes.selectedCell.previousValue);
+    if ('selectedCells' in changes && !changes.selectedCells.firstChange) {
+      this.selectedCells.forEach(selectedCell => this._selectCell(selectedCell));
+      const changes = this._cellArrayDiffer.diff(this.selectedCells);
+      if (changes)
+        changes.forEachRemovedItem(changeRecord => this._deselectCell(changeRecord.item));
     }
 
     if ('selectedLink' in changes) {
@@ -41,16 +43,16 @@ export class HighlighterDirective implements OnChanges {
 
     if ('showAssociations' in changes) {
       if (changes.showAssociations.currentValue) {
-        if (this.selectedCell)
-          this._highlightCellAndItsAssociations(this.selectedCell);
+        if (this.selectedCells)
+          this.selectedCells.forEach(selectedCell => this._highlightCellAndItsAssociations(selectedCell));
         else if (this.selectedLink) {
           this._highlightCell(this.selectedLink.source);
           this._highlightCell(this.selectedLink.target);
         }
       }
       else {
-        if (this.selectedCell)
-          this._unhighlightCellAndItsAssociations(this.selectedCell);
+        if (this.selectedCells)
+          this.selectedCells.forEach(selectedCell => this._unhighlightCellAndItsAssociations(selectedCell));
         else if (this.selectedLink) {
           this._unhighlightCell(this.selectedLink.source);
           this._unhighlightCell(this.selectedLink.target);
@@ -89,7 +91,6 @@ export class HighlighterDirective implements OnChanges {
   }
 
   private _selectCell(cell: Cell) {
-    this._deselectPreviousSelectedElements(cell);
     cell.domInstance.setAttribute('data-selected', '');
   }
 

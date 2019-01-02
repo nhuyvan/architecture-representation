@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation, HostListener } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation, HostListener } from '@angular/core';
 
 import { Link } from './models/Link';
 import { Column, ColumnId } from './models/Column';
 import { Cell } from './models/Cell';
 import { ColumnLayoutChange, ColumnLayoutChangeType } from './models/ColumnLayoutChange';
+import { CellSelectionEvent, CellSelectionEventType } from './models/CellSelectionEvent';
 
 @Component({
   selector: 'mapper-canvas',
@@ -18,22 +19,18 @@ export class CanvasComponent implements AfterViewInit {
   columnHeight = 0;
   spacingBetweenColumns = 0;
   linkTable = new Map<Cell, Array<Link>>();
-  selectedCell: Cell;
   selectedLink: Link;
   readonly columns: Column = {
     element: [],
     property: [],
     quality: []
   };
-  elementCellDeleted: Cell;
-  propertyCellDeleted: Cell;
-  qualityCellDeleted: Cell;
+  selectedCells: Cell[] = [];
   showAssociations = false;
 
   @ViewChild('canvas')
   private _canvasRef: ElementRef<SVGSVGElement>;
   private _canvasRect: ClientRect;
-  private _sourceCell: Cell;
 
   constructor(private _changeDetector: ChangeDetectorRef) { }
 
@@ -47,53 +44,47 @@ export class CanvasComponent implements AfterViewInit {
       this.columnWidth = this._canvasRect.width * 25 / 100;
       this.columnHeight = this._canvasRect.height;
       this._changeDetector.markForCheck();
-    }, 1000)
+    }, 1000);
   }
 
   @HostListener('window:keydown', ['$event'])
   onKeyPressed(event: KeyboardEvent) {
     if (event.key === 'Backspace' || event.key === 'Delete') {
-      if (this.selectedCell) {
-        switch (this.selectedCell.column) {
-          case 'element':
-            this.elementCellDeleted = this.selectedCell;
-            break;
-          case 'property':
-            this.propertyCellDeleted = this.selectedCell;
-            break;
-          case 'quality':
-            this.qualityCellDeleted = this.selectedCell;
-        }
-        this._deleteCell(this.selectedCell);
+      if (this.selectedCells.length > 0) {
+        this._deleteSelectedCells();
+        this.selectedCells = [];
         this._notifyLinksChange();
+        this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
       }
       else if (this.selectedLink) {
-        this._deleteLink(this.selectedLink);
         this._notifyLinksChange();
+        this._deleteLink(this.selectedLink);
       }
     }
   }
 
-  private _deleteCell(cellToDelete: Cell) {
-    this.linkTable.delete(cellToDelete);
-    this._deleteCellAndAdjustCellIdsAfterDeletedCell(cellToDelete);
-    this.linkTable.forEach(links => {
-      for (const link of links)
-        if (link.target === cellToDelete)
-          this._deleteLink(link);
-    });
-    this.selectedCell = null;
-    this._sourceCell = null;
+  private _deleteSelectedCells() {
+    for (const cellToDelete of this.selectedCells) {
+      this.columns[cellToDelete.column] = this.columns[cellToDelete.column].filter(cell => cell !== cellToDelete);
+      this.linkTable.delete(cellToDelete);
+      this.linkTable.forEach(links => {
+        for (const link of links)
+          if (link.target === cellToDelete)
+            this._deleteLink(link);
+      });
+    }
+    this._adjustCellIds(new Set<ColumnId>(this.selectedCells.map(cell => cell.column)));
     this._adjustLinkSelectorsInLinkTable();
   }
 
-  private _deleteCellAndAdjustCellIdsAfterDeletedCell(deletedCell: Cell) {
-    const cells = this.columns[deletedCell.column];
-    cells.splice(deletedCell.id, 1);
-    for (let i = deletedCell.id; i < cells.length; i++) {
-      const cell = cells[i];
-      cell.id = i;
-      cell.idSelector = `${cell.column}-cell-${i}`;
+  private _adjustCellIds(affectedColumns: Set<ColumnId>) {
+    for (const affectedColumn of affectedColumns) {
+      const cells = this.columns[affectedColumn];
+      for (let index = 0; index < cells.length; index++) {
+        const cell = cells[index];
+        cell.id = index;
+        cell.idSelector = `${cell.column}-cell-${index}`;
+      }
     }
   }
 
@@ -115,24 +106,23 @@ export class CanvasComponent implements AfterViewInit {
   }
 
   onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {
-    if (
-      layoutChange.type === ColumnLayoutChangeType.CELL_ADDED ||
-      layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_INCREASED
-    ) {
-      const cells = this.columns[layoutChange.column];
-      this._resizeCanvasIfCellOverflowsCanvas(cells[cells.length - 1]);
+    switch (layoutChange.type) {
+      case ColumnLayoutChangeType.CELL_ADDED:
+      case ColumnLayoutChangeType.CELL_HEIGHT_INCREASED:
+        const cells = this.columns[layoutChange.column];
+        this._expandCanvasIfCellOverflowsColumn(cells[cells.length - 1]);
+        this._notifyLinksChange();
+        break;
+      case ColumnLayoutChangeType.CELL_HEIGHT_DECREASED:
+        this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
+        this._notifyLinksChange();
+        break;
     }
-    else if (layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_UNCHANGED) {
-      this.selectedCell = null;
-      this._sourceCell = null;
-    }
-    else
-      this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
-    this._notifyLinksChange();
+    this.selectedCells = this.selectedCells.filter(selected => selected !== layoutChange.trigger);
   }
 
-  private _resizeCanvasIfCellOverflowsCanvas(cell: Cell) {
-    const cellBottom = cell.top + cell.height
+  private _expandCanvasIfCellOverflowsColumn(cell: Cell) {
+    const cellBottom = cell.top + cell.height;
     if (cellBottom > this._canvasRect.height) {
       this._canvasRef.nativeElement.style.height = this._canvasRect.height
         + (cellBottom - this._canvasRect.bottom) + 5
@@ -155,10 +145,6 @@ export class CanvasComponent implements AfterViewInit {
       this._canvasRef.nativeElement.style.height = adjustedHeight + 'px';
       this.columnHeight = adjustedHeight;
       this._canvasRect = this._canvasRef.nativeElement.getBoundingClientRect();
-      this.columns.element = [...this.columns.element];
-      this.columns.property = [...this.columns.property];
-      this.columns.quality = [...this.columns.quality];
-      this._changeDetector.detectChanges();
     }
   }
 
@@ -181,82 +167,100 @@ export class CanvasComponent implements AfterViewInit {
   }
 
   onLinkSelected(link: Link) {
+    this.selectedCells = [];
     this.selectedLink = link;
-    this.selectedCell = null;
-    this._sourceCell = null;
   }
 
-  onCellAdded(cell: Cell) {
-    cell.id = this.columns[cell.column].length;
-    this.columns[cell.column] = this.columns[cell.column].concat(cell);
+  onCellAdded(columnId: ColumnId) {
+    const newCell = this._createNewCell(columnId);
+    this.columns[columnId] = this.columns[columnId].concat(newCell);
+    // Wait until the new cell was rendered, then highlight it
+    setTimeout(() => {
+      this.selectedCells = [newCell];
+      this._changeDetector.detectChanges();
+    }, 0);
   }
 
-  onElementCellClicked(cell: Cell) {
-    this._sourceCell = this._sourceCell !== cell ? cell : null;
-    this.selectedCell = this._sourceCell;
-    this.selectedLink = null;
-  }
-
-  onPropertyCellClicked(cell: Cell) {
-    if (cell === this._sourceCell)
-      this._sourceCell = null;
-    // Only "element" column can add links to "property" column
-    else if (this._sourceCell && this._sourceCell.column === 'element') {
-      const added = this._addNewLink(this._createLink(this._sourceCell, cell));
-      if (added) {
-        this._notifyLinksChange();
-        this._sourceCell = null;
-      }
-      // If there is a link already exists between the source and target
-      // Then highlight the target cell
-      else {
-        this._sourceCell = null;
-        this.selectedCell = cell;
-        return;
-      }
-    }
-    else
-      this._sourceCell = cell;
-    this.selectedCell = this._sourceCell;
-    this.selectedLink = null;
-  }
-
-  onQualityCellClicked(cell: Cell) {
-    if (this._sourceCell && this._sourceCell.column === 'property') {
-      const added = this._addNewLink(this._createLink(this._sourceCell, cell));
-      if (added) {
-        this._notifyLinksChange();
-        this.selectedCell = null;
-      }
-      // If there is a link already exists between the source and target
-      // Then highlight the target cell
-      else
-        this.selectedCell = cell;
-    }
-    else
-      this.selectedCell = this._sourceCell === cell ? null : cell;
-    this.selectedLink = null;
-    this._sourceCell = null;
-  }
-
-  private _createLink(source: Cell, target: Cell): Link {
+  private _createNewCell(columnId: ColumnId): Cell {
     return {
+      id: this.columns[columnId].length,
+      left: 0,
+      top: 0,
+      width: 0,
+      height: 0,
+      text: 'Double click to add text',
+      column: columnId,
+      idSelector: `${columnId}-cell-${this.columns[columnId].length}`,
+      domInstance: null
+    }
+  }
+
+  onElementCellClicked(selectionEvent: CellSelectionEvent) {
+    this._addToOrRemoveFromSelectedCells(selectionEvent);
+    this.selectedLink = null;
+  }
+
+  onPropertyCellClicked(selectionEvent: CellSelectionEvent) {
+    // Only "element" column can add links to "element" column
+    this._renderLinksOrAddToOrRemoveFromSelectedCells('element', selectionEvent);
+  }
+
+  onQualityCellClicked(selectionEvent: CellSelectionEvent) {
+    // Only "property" column can add links to "property" column
+    this._renderLinksOrAddToOrRemoveFromSelectedCells('property', selectionEvent);
+  }
+
+  private _renderLinksOrAddToOrRemoveFromSelectedCells(sourceColumn: 'element' | 'property', event: CellSelectionEvent) {
+    switch (event.type) {
+      case CellSelectionEventType.NEW_SELECTION:
+        if (this.selectedCells.length > 0) {
+          const addedLinks = this.selectedCells.map(e => e.column === sourceColumn && this._addNewLink(e, event.cell))
+            .filter(added => added);
+          if (addedLinks.length > 0)
+            this._notifyLinksChange();
+          else
+            this._addToOrRemoveFromSelectedCells(event);
+        }
+        else
+          this._addToOrRemoveFromSelectedCells(event);
+        break;
+      default:
+        this._addToOrRemoveFromSelectedCells(event);
+        break;
+    }
+    this.selectedLink = null;
+  }
+
+  private _addToOrRemoveFromSelectedCells(selectionEvent: CellSelectionEvent) {
+    switch (selectionEvent.type) {
+      case CellSelectionEventType.UNSELECT:
+        this.selectedCells = this.selectedCells.filter(selectedCell => selectedCell !== selectionEvent.cell);
+        break;
+      case CellSelectionEventType.NEW_SELECTION:
+        this.selectedCells = [selectionEvent.cell];
+        break;
+      case CellSelectionEventType.SELECT:
+        this.selectedCells = this.selectedCells.concat(selectionEvent.cell);
+        break;
+    }
+  }
+
+  private _addNewLink(source: Cell, target: Cell) {
+    const newLink = {
       source,
       target,
       idSelector: source.idSelector + '_' + target.idSelector,
       weight: 1.0,
       domInstance: null
     };
-  }
 
-  private _addNewLink(link: Link) {
-    if (!this.linkTable.has(link.source)) {
-      this.linkTable.set(link.source, [link]);
+    if (!this.linkTable.has(source)) {
+      this.linkTable.set(source, [newLink]);
       return true;
     }
-    else if (!this._linkExists(this.linkTable.get(link.source), link)) {
-      this.linkTable.get(link.source)
-        .push(link);
+    else if (!this._linkExists(this.linkTable.get(source), newLink)) {
+      this.linkTable.get(source)
+        .push(newLink);
       return true;
     }
     return false;

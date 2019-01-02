@@ -1,0 +1,21 @@
+<svg:g class='cell'
+       id='{{cell.idSelector}}'
+       data-cell
+       [attr.transform]='"translate(" + cell.left + "," + cell.top + ")"'
+       stroke='#000'
+       fill='#fff'>
+    <rect x='0'
+          y='0'
+          [attr.width]='cell.width'
+          [attr.height]='cell.height'>
+    </rect>
+    <foreignObject x='0'
+                   y='0'
+                   [attr.width]='cell.width'
+                   [attr.height]='cell.height'>
+        <xhtml:div style='display:flex;justify-content:center;align-items:center;position:relative;white-space:pre; text-align:center;'
+                   [style.height.px]='cell.height'>
+            {{cell.text}}
+        </xhtml:div>
+    </foreignObject>
+</svg:g>

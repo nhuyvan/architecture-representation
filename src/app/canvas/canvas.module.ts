@@ -8,9 +8,11 @@ import { LinksComponent } from './views/links/links.component';
 import { HighlighterDirective } from './views/highlighter.directive';
 import { TextEditorComponent } from './views/text-editor/text-editor.component';
 import { ColorPickerComponent } from './views/color-picker/color-picker.component';
+import { CellComponent } from './views/cell/cell.component';
+import { CellGroupComponent } from './views/cell-group/cell-group.component';
 
 @NgModule({
-  declarations: [CanvasComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent],
+  declarations: [CanvasComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent, CellComponent, CellGroupComponent],
   imports: [
     CommonModule,
     SharedModule

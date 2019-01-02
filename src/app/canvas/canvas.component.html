@@ -1,8 +1,8 @@
 <svg #canvas
      highlighter
-     [selectedCell]='selectedCell'
      [selectedLink]='selectedLink'
      [showAssociations]='showAssociations'
+     [selectedCells]='selectedCells'
      [linkTable]='linkTable'>
     <g column
        [cells]='columns.element'
@@ -11,7 +11,6 @@
        header='Architectural Elements'
        headerTitleColor='magenta'
        prefix='element'
-       [deletedCell]='elementCellDeleted'
        (cellAdded)='onCellAdded($event)'
        (cellClicked)='onElementCellClicked($event)'
        (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
@@ -24,7 +23,6 @@
        header='System Properties'
        headerTitleColor='orange'
        prefix='property'
-       [deletedCell]='propertyCellDeleted'
        (cellAdded)='onCellAdded($event)'
        (cellClicked)='onPropertyCellClicked($event)'
        (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
@@ -37,7 +35,6 @@
        header='System Qualities'
        headerTitleColor='blue'
        prefix='quality'
-       [deletedCell]='qualityCellDeleted'
        (cellAdded)='onCellAdded($event)'
        (cellClicked)='onQualityCellClicked($event)'
        (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
