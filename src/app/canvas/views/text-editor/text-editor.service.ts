@@ -11,7 +11,7 @@ export class TextEditorService {
 
   private readonly _textEditorPortal = new ComponentPortal<TextEditorComponent>(TextEditorComponent);
   private _textEditor: ComponentRef<TextEditorComponent>;
-
+  private static readonly _DEFAULT_TEXT = 'Double click to edit';
   constructor(
     private _componentFactoryResolver: ComponentFactoryResolver,
     private _injector: Injector,
@@ -30,7 +30,7 @@ export class TextEditorService {
     this._textEditor = emptyOutlet.attachComponentPortal(this._textEditorPortal);
     document.body.appendChild(overlay);
     this._textEditor.instance.snapEditorToCellBoundary(cell);
-    this._textEditor.instance.beginEditing(cell.text);
+    this._textEditor.instance.beginEditing(cell.text === TextEditorService._DEFAULT_TEXT ? '' : cell.text);
     return emptyOutlet;
   }
 }
@@ -41,10 +41,10 @@ export class TextEditorComponentRef {
     private readonly _editorComponent: TextEditorComponent,
     private readonly _portalOutlet: PortalOutlet) { }
 
-  textAdded(cb: (text: string, cellBeingEdited: Cell) => void) {
+  textAdded(cb: (payload: { text: string, textContainerHeight: number }, cellBeingEdited: Cell) => void) {
     return this._editorComponent.finishEditing()
-      .subscribe(text => {
-        cb(text, this._cell);
+      .subscribe(payload => {
+        cb(payload, this._cell);
         this._dismiss();
       });
   }
@@ -53,4 +53,5 @@ export class TextEditorComponentRef {
     this._portalOutlet.detach();
     this._portalOutlet.dispose();
   }
+
 }

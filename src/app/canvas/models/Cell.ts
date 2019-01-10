@@ -1,4 +1,5 @@
 import { ColumnId } from './Column';
+import { CellGroup } from './CellGroup';
 
 export interface Cell {
   id: number;
@@ -10,4 +11,5 @@ export interface Cell {
   column: ColumnId;
   idSelector: string;
   domInstance: SVGGElement;
+  cellGroup: CellGroup;
 }

@@ -1,7 +1,9 @@
 <svg:g class='cell'
-       id='{{cell.idSelector}}'
+       #cellElement
+       [id]='cell.idSelector'
+       [attr.data-id]='cell.id'
        data-cell
-       [attr.transform]='"translate(" + cell.left + "," + cell.top + ")"'
+       [attr.transform]='"translate(" + cell.left + "," + (cell.top || 0) + ")"'
        stroke='#000'
        fill='#fff'>
     <rect x='0'
@@ -13,7 +15,7 @@
                    y='0'
                    [attr.width]='cell.width'
                    [attr.height]='cell.height'>
-        <xhtml:div style='display:flex;justify-content:center;align-items:center;position:relative;white-space:pre; text-align:center;'
+        <xhtml:div style='display:flex;justify-content:center;align-items:center;white-space:pre; text-align:center;'
                    [style.height.px]='cell.height'>
             {{cell.text}}
         </xhtml:div>

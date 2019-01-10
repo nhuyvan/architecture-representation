@@ -1,44 +1,37 @@
-<svg #canvas
-     highlighter
+<svg highlighter
      [selectedLink]='selectedLink'
      [showAssociations]='showAssociations'
      [selectedCells]='selectedCells'
      [linkTable]='linkTable'>
     <g column
-       [cells]='columns.element'
        [width]='columnWidth'
        [height]='columnHeight'
+       [cellGroups]='cellGroups.element'
        header='Architectural Elements'
        headerTitleColor='magenta'
        prefix='element'
        (cellAdded)='onCellAdded($event)'
-       (cellClicked)='onElementCellClicked($event)'
-       (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
-       (layoutChanged)='onColumnLayoutChanged($event, "element")'></g>
+       (cellClicked)='onElementCellClicked($event)'></g>
     <g column
-       [cells]='columns.property'
        [width]='columnWidth'
        [height]='columnHeight'
        [left]='spacingBetweenColumns + columnWidth'
+       [cellGroups]='cellGroups.property'
        header='System Properties'
        headerTitleColor='orange'
        prefix='property'
        (cellAdded)='onCellAdded($event)'
-       (cellClicked)='onPropertyCellClicked($event)'
-       (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
-       (layoutChanged)='onColumnLayoutChanged($event, "property")'></g>
+       (cellClicked)='onPropertyCellClicked($event)'></g>
     <g column
-       [cells]='columns.quality'
        [width]='columnWidth'
        [height]='columnHeight'
        [left]='(spacingBetweenColumns + columnWidth) * 2'
+       [cellGroups]='cellGroups.quality'
        header='System Qualities'
        headerTitleColor='blue'
        prefix='quality'
        (cellAdded)='onCellAdded($event)'
-       (cellClicked)='onQualityCellClicked($event)'
-       (showAssociationsToggled)='toggleAssociationsForSelectedComponent($event)'
-       (layoutChanged)='onColumnLayoutChanged($event, "quality")'></g>
+       (cellClicked)='onQualityCellClicked($event)'></g>
     <g links
        [linkTable]='linkTable'
        [columns]='columns'

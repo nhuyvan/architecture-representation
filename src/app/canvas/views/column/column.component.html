@@ -1,35 +1,24 @@
-<svg:g #column
-       [attr.transform]='"translate(" + left + ", 0)"'
-       class='column'
-       (click)='onCellClicked($event.target.parentElement, $event)'
-       (dblclick)='showTextEditor($event.target.parentElement)'>
-    <foreignObject [attr.width]='width'
+<svg:foreignObject [attr.width]='width'
                    [attr.height]='headerHeight'
-                   x='0'
+                   [attr.x]='left'
                    y='0'>
-        <xhtml:header>
-            <span class='column__title'
-                  [style.color]='headerTitleColor'>
-                {{header}}
-            </span>
-            <div>
-                <button class='icon-container'
-                        tooltip='Add a new cell'
-                        (click)='addCell()'
-                        style='margin-right: 5px'>
-                    <i class='material-icons'>add</i>
-                </button>
-                <button class='icon-container'
-                        [tooltip]='(shouldShowAssociations() ? "Hide" : "Show") + " associations for selected component"'
-                        (click)='showAssociationsForSelectedComponent($event)'
-                        style='margin-left: 5px'>
-                    <i *ngIf='shouldShowAssociations();else show'
-                       class='material-icons'>visibility_off</i>
-                    <ng-template #show>
-                        <i class='material-icons'>visibility</i>
-                    </ng-template>
-                </button>
-            </div>
-        </xhtml:header>
-    </foreignObject>
-</svg:g>
+    <xhtml:header>
+        <span class='column__title'
+              [style.color]='headerTitleColor'>
+            {{header}}
+        </span>
+        <div>
+            <button class='icon-container'
+                    tooltip='Add a new cell'
+                    (click)='addCell()'
+                    style='margin-right: 5px'>
+                <i class='material-icons'>add</i>
+            </button>
+        </div>
+    </xhtml:header>
+</svg:foreignObject>
+<ng-container *ngFor='let cellGroup of cellGroups; trackBy: cellGroupArrayTrackBy'>
+    <svg:g cell-group
+           [cellGroup]='cellGroup'>
+    </svg:g>
+</ng-container>

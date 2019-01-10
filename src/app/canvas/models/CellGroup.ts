@@ -1,40 +1,59 @@
 import { Cell } from './Cell';
 
 export class CellGroup {
-  static readonly DEFAULT_SPACING_BETWEEN_CELLS = 5;
-  private _cells: Cell[] = [];
-
-  constructor(readonly useDefaultSpacing: boolean) {
+  public readonly cells: Cell[] = [];
+  constructor(
+    readonly useDefaultSpacing: boolean,
+    public left: number,
+    public top: number,
+    public width: number,
+    public height: number
+  ) {
 
   }
 
   addCell(cell: Cell) {
-    if (this._cells.every(existingCell => existingCell !== cell))
-      this._cells.push(cell);
+    if (this.cells.every(existingCell => existingCell !== cell)) {
+      this.cells.push(cell);
+      this.cells.sort((a, b) => a.id - b.id);
+      cell.cellGroup = this;
+    }
   }
 
-  addCells(cells: Cell[]) {
-    cells.forEach(cell => this.addCell(cell));
+  newestCell() {
+    return this.cells[this.cells.length - 1];
   }
 
-  getTotalHeight() {
-    if (this._cells.length === 0)
+  calculateMinimumHeight() {
+    if (this.cells.length === 0)
       return 0;
-    const totalHeightOfAllCells = this._cells.reduce((totalHeight, cell) => totalHeight + cell.height, 0);
-    const totalSpacingBetweenCells = CellGroup.DEFAULT_SPACING_BETWEEN_CELLS * (this._cells.length + 1)
-    return totalHeightOfAllCells + totalSpacingBetweenCells;
+    const totalHeightOfAllCells = this.cells.reduce((totalHeight, cell) => totalHeight + cell.height, 0);
+    const totalSpacingBetweenCells = this.defaultSpacingBetweenCells() * (this.cells.length + 1);
+    this.height = totalHeightOfAllCells + totalSpacingBetweenCells;
+    return this.height;
+  }
+
+  defaultSpacingBetweenCells() {
+    return this.useDefaultSpacing ? 10 : 5;
   }
 
   removeCell(cell: Cell) {
-    for (let i = 0; i < this._cells.length; i++)
-      if (this._cells[i] === cell)
-        return this._cells.splice(i, 1)[0];
+    for (let i = 0; i < this.cells.length; i++)
+      if (this.cells[i] === cell)
+        return this.cells.splice(i, 1)[0];
     return null;
   }
 
+  size() {
+    return this.cells.length;
+  }
+
   clone(): CellGroup {
-    const clone = new CellGroup(this.useDefaultSpacing);
-    clone._cells = [...clone._cells];
+    const clone = new CellGroup(this.useDefaultSpacing, this.left, this.top, this.width, this.height);
+    for (const cell of this.cells) {
+      cell.cellGroup = clone;
+      clone.cells.push(cell);
+    }
     return clone;
   }
 }

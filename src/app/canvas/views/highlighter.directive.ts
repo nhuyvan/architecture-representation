@@ -43,7 +43,7 @@ export class HighlighterDirective implements OnChanges {
 
     if ('showAssociations' in changes) {
       if (changes.showAssociations.currentValue) {
-        if (this.selectedCells)
+        if (this.selectedCells.length > 0)
           this.selectedCells.forEach(selectedCell => this._highlightCellAndItsAssociations(selectedCell));
         else if (this.selectedLink) {
           this._highlightCell(this.selectedLink.source);
@@ -51,7 +51,7 @@ export class HighlighterDirective implements OnChanges {
         }
       }
       else {
-        if (this.selectedCells)
+        if (this.selectedCells.length > 0)
           this.selectedCells.forEach(selectedCell => this._unhighlightCellAndItsAssociations(selectedCell));
         else if (this.selectedLink) {
           this._unhighlightCell(this.selectedLink.source);

@@ -13,18 +13,26 @@ export class TextEditorComponent {
   @ViewChild('input')
   private _input: ElementRef<HTMLDivElement>;
 
-  private _textInput = new Subject<string>();
+  private _textInput = new Subject<{ text: string, textContainerHeight: number }>();
 
   constructor() {
     this._textInput.pipe(take(1));
   }
 
   snapEditorToCellBoundary(cell: Cell) {
-    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-    this._input.nativeElement.style.left = cell.left + 2 + 'px';
-    this._input.nativeElement.style.top = cell.top - scrollTop + 2 + 'px';
+    const canvasScrollContainer = document.querySelector('mapper-canvas');
+    // If "cell" has value for "column", we are entering input for a cell
+    // otherwise, it is for a link
+    if (cell.column) {
+      const left = canvasScrollContainer.getBoundingClientRect().left;
+      this._input.nativeElement.style.left = left + cell.left + 2 + 'px';
+    }
+    else
+      this._input.nativeElement.style.left = cell.left + 2 + 'px';
+    const scrollTop = canvasScrollContainer.scrollTop;
+    this._input.nativeElement.style.top = cell.top - scrollTop + 7 + 'px';
     this._input.nativeElement.style.width = cell.width - 4 + 'px';
-    this._input.nativeElement.style.height = cell.height - 4 + 'px';
+    this._input.nativeElement.style.height = cell.height - 7 + 'px';
     this._input.nativeElement.style.whiteSpace = 'pre';
     this._input.nativeElement.style.textAlign = 'center';
     this._input.nativeElement.style.display = 'flex';
@@ -41,7 +49,7 @@ export class TextEditorComponent {
     }
   }
 
-  beginEditing(initialText = '') {
+  beginEditing(initialText) {
     this._input.nativeElement.firstElementChild.innerHTML = initialText;
     this._focus();
   }
@@ -65,10 +73,13 @@ export class TextEditorComponent {
   }
 
   onBlur() {
-    this._textInput.next((this._input.nativeElement.firstElementChild as HTMLDivElement).innerText.trim());
+    this._textInput.next({
+      text: (this._input.nativeElement.firstElementChild as HTMLDivElement).innerText.trim(),
+      textContainerHeight: this._input.nativeElement.firstElementChild.getBoundingClientRect().height
+    });
   }
 
-  finishEditing(): Observable<string> {
+  finishEditing(): Observable<{ text: string, textContainerHeight: number }> {
     return this._textInput.asObservable();
   }
 

@@ -108,7 +108,11 @@ export class LinksComponent implements OnChanges, AfterViewInit {
       text: String(link.weight)
     } as Cell;
     this._textEditorService.show(cell)
-      .textAdded(value => link.weight = +value || link.weight);
+      .textAdded(value => {
+        const weight = +value;
+        if (weight > 0)
+          link.weight = weight;
+      });
   }
 
   selectLink(clickedItem: SVGGElement, event: MouseEvent) {

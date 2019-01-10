@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+import { SharedModule } from '@shared/shared.module';
 import { CoreComponent } from './core.component';
 import { CanvasModule } from '../canvas/canvas.module';
 
@@ -8,7 +9,8 @@ import { CanvasModule } from '../canvas/canvas.module';
   declarations: [CoreComponent],
   imports: [
     CommonModule,
-    CanvasModule
+    CanvasModule,
+    SharedModule
   ],
   exports: [CoreComponent]
 })

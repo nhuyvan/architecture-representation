@@ -1,1 +1,26 @@
+<section class='actions frame'>
+    <button [tooltip]='(showAssociations ? "Hide" : "Show") + " associations for selected component"'
+            position='right'
+            (click)='toggleShowAssociations()'>
+        <i *ngIf='showAssociations;else show'
+           class='material-icons'>visibility_off</i>
+        <ng-template #show>
+            <i class='material-icons'>visibility</i>
+        </ng-template>
+    </button>
+    <button [tooltip]='(cellGroupingSelected ? "Group" : "Ungroup") + " selected cells"'
+            position='right'
+            (click)='toggleCellGrouping()'>
+        <i *ngIf='cellGroupingSelected;else groupingUnselected'
+           class='material-icons'>layers</i>
+        <ng-template #groupingUnselected>
+            <i class='material-icons'>layers_clear</i>
+        </ng-template>
+    </button>
+    <button [tooltip]='"Show matrices"'
+            position='right'
+            (click)='showMatrices()'>
+        <i class='material-icons'>grid_on</i>
+    </button>
+</section>
 <mapper-canvas></mapper-canvas>

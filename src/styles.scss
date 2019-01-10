@@ -2,7 +2,7 @@
 body {
     margin: 0;
     padding: 0;
-    overflow: hidden auto;
+    overflow: hidden;
     width: 100vw;
     height: 100vh;
 }
@@ -53,4 +53,37 @@ body {
     top: 0;
     left: 0;
     z-index: 1000;
+}
+
+.frame {
+    display: block;
+    box-sizing: border-box;
+    box-shadow: 0 0 1px #888;
+    margin: 5px;
+    border-radius: 3px;
+    position: relative;
+    max-height: 99vh;
+    overflow: hidden;
+}
+
+button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 100%;
+    position: relative !important;
+    box-shadow: 0 0 3px #000;
+    border: none;
+    outline: none;
+    pointer-events: all;
+    z-index: 1;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    user-select: none;
+    &:hover {
+        background-color: #C5CAE9;
+    }
 }
