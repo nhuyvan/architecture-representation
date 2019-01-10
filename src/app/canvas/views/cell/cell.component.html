@@ -3,6 +3,7 @@
        [id]='cell.idSelector'
        [attr.data-id]='cell.id'
        data-cell
+       [attr.data-off]='!cell.isOn'
        [attr.transform]='"translate(" + cell.left + "," + (cell.top || 0) + ")"'
        stroke='#000'
        fill='#fff'>

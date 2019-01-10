@@ -1,0 +1,16 @@
+<mapper-command [icon]='showAssociationsSelected ? "visibility_off" : "visibility"'
+                [tooltip]='showAssociationsSelected ? "Hide associations for selected component" : "Show associations for selected component"'
+                (toggled)='toggleShowAssociations($event)'>
+</mapper-command>
+<mapper-command [icon]='cellGroupingSelected ? "layers" : "layers_clear"'
+                [tooltip]='cellGroupingSelected ? "Group selected cells" : "Ungroup selected cells"'
+                (toggled)='toggleCellGrouping($event)'>
+</mapper-command>
+<mapper-command icon='grid_on'
+                tooltip='Show matrices'
+                (toggled)='showMatrices()'>
+</mapper-command>
+<mapper-command [icon]='turnOffCellSelected ? "not_interested" : "check"'
+                [tooltip]='turnOffCellSelected ? "Turn off selected cells" : "Turn on selected cells"'
+                (toggled)='turnCellOnOrOff($event)'>
+</mapper-command>

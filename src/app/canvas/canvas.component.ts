@@ -7,9 +7,8 @@ import { Cell } from './models/Cell';
 import { ColumnLayoutChange, ColumnLayoutChangeType } from './models/ColumnLayoutChange';
 import { CellSelectionEvent, CellSelectionEventType } from './models/CellSelectionEvent';
 import { ColumnLayoutChangeService } from './services/column-layout-change.service';
-import { CommandService } from './services/command.service';
-import { Command } from './models/Command';
 import { CellGroup } from './models/CellGroup';
+import { CommandService, Command } from '@shared/services/command.service';
 
 @Component({
   selector: 'mapper-canvas',
@@ -85,22 +84,13 @@ export class CanvasComponent implements AfterViewInit, OnInit {
             this._ungroupSelectedCells();
             break;
           case Command.SHOW_MATRICES:
-            const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
-            const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
-            this.linkTable.forEach(links => {
-              for (const link of links) {
-                switch (link.source.column) {
-                  case 'element':
-                    L.set([link.target.id, link.source.id], 1);
-                    break;
-                  case 'property':
-                    R.set([link.target.id, link.source.id], 1);
-                    break;
-                }
-              }
-            });
-            console.log('L matrix:', L);
-            console.log('R matrix:', R);
+            this._showMatrices();
+            break;
+          case Command.TURN_CELL_ON:
+            this._turnCellsOnOrOff(true);
+            break;
+          case Command.TURN_CELL_OFF:
+            this._turnCellsOnOrOff(false);
             break;
         }
       });
@@ -147,6 +137,30 @@ export class CanvasComponent implements AfterViewInit, OnInit {
       this.cellGroups.element = this.cellGroups.element.filter(group => group !== cellGroup);
   }
 
+  private _showMatrices() {
+    const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
+    const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
+    this.linkTable.forEach(links => {
+      for (const link of links) {
+        switch (link.source.column) {
+          case 'element':
+            L.set([link.target.id, link.source.id], 1);
+            break;
+          case 'property':
+            R.set([link.target.id, link.source.id], 1);
+            break;
+        }
+      }
+    });
+    console.log('L matrix:', L);
+    console.log('R matrix:', R);
+  }
+
+  private _turnCellsOnOrOff(onOrOff: boolean) {
+    this.selectedCells.filter(selected => selected.column === 'element')
+      .forEach(cell => cell.isOn = onOrOff);
+    this._changeDetector.detectChanges();
+  }
   private _onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {
     switch (layoutChange.type) {
       case ColumnLayoutChangeType.CELL_ADDED:
@@ -306,29 +320,31 @@ export class CanvasComponent implements AfterViewInit, OnInit {
       column: columnId,
       idSelector: `${columnId}-cell-${id}`,
       domInstance: null,
-      cellGroup: null
+      cellGroup: null,
+      isOn: true
     }
   }
 
   onElementCellClicked(selectionEvent: CellSelectionEvent) {
     this._addToOrRemoveFromSelectedCells(selectionEvent);
-    this._activateCellGroupingOrCellUngrouping();
+    this._activateCellGroupingOrCellUngroupingCommand();
+    this._activateTurnOnCellOrTurnOffCellCommand();
     this.selectedLink = null;
   }
 
   onPropertyCellClicked(selectionEvent: CellSelectionEvent) {
     // Only "element" column can add links to "element" column
     this._addLinksOrAddToOrRemoveFromSelectedCells('element', selectionEvent);
-    this._activateCellGroupingOrCellUngrouping();
+    this._activateCellGroupingOrCellUngroupingCommand();
   }
 
   onQualityCellClicked(selectionEvent: CellSelectionEvent) {
     // Only "property" column can add links to "property" column
     this._addLinksOrAddToOrRemoveFromSelectedCells('property', selectionEvent);
-    this._activateCellGroupingOrCellUngrouping();
+    this._activateCellGroupingOrCellUngroupingCommand();
   }
 
-  private _activateCellGroupingOrCellUngrouping() {
+  private _activateCellGroupingOrCellUngroupingCommand() {
     if (this.selectedCells.length > 0) {
       if (this.selectedCells.some(cell => !cell.cellGroup.useDefaultSpacing))
         this._commandService.select(Command.ACTIVATE_CELL_GROUPING);
@@ -337,6 +353,13 @@ export class CanvasComponent implements AfterViewInit, OnInit {
     }
     else
       this._commandService.select(Command.ACTIVATE_CELL_GROUPING);
+  }
+
+  private _activateTurnOnCellOrTurnOffCellCommand() {
+    if (this.selectedCells.some(selected => !selected.isOn))
+      this._commandService.select(Command.ACTIVATE_TURN_ON_CELL);
+    else
+      this._commandService.select(Command.ACTIVATE_TURN_OFF_CELL);
   }
 
   private _addLinksOrAddToOrRemoveFromSelectedCells(sourceColumn: 'element' | 'property', event: CellSelectionEvent) {

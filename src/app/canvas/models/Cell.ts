@@ -12,4 +12,5 @@ export interface Cell {
   idSelector: string;
   domInstance: SVGGElement;
   cellGroup: CellGroup;
+  isOn: boolean;
 }
