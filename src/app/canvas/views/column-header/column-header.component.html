@@ -1,0 +1,19 @@
+<svg:foreignObject [attr.width]='width'
+                   [attr.height]='height'
+                   [attr.x]='left'
+                   y='0'
+                   class='column-header'>
+    <xhtml:header>
+        <span class='column__title'
+              [style.color]='labelColor'>
+            {{label}}
+        </span>
+        <div>
+            <button class='icon-container'
+                    tooltip='Add a new cell'
+                    (click)='onAddCellButtonClicked()'>
+                <i class='material-icons'>add</i>
+            </button>
+        </div>
+    </xhtml:header>
+</svg:foreignObject>

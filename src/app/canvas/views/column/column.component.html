@@ -1,22 +1,3 @@
-<svg:foreignObject [attr.width]='width'
-                   [attr.height]='headerHeight'
-                   [attr.x]='left'
-                   y='0'>
-    <xhtml:header>
-        <span class='column__title'
-              [style.color]='headerTitleColor'>
-            {{header}}
-        </span>
-        <div>
-            <button class='icon-container'
-                    tooltip='Add a new cell'
-                    (click)='addCell()'
-                    style='margin-right: 5px'>
-                <i class='material-icons'>add</i>
-            </button>
-        </div>
-    </xhtml:header>
-</svg:foreignObject>
 <ng-container *ngFor='let cellGroup of cellGroups; trackBy: cellGroupArrayTrackBy'>
     <svg:g cell-group
            [cellGroup]='cellGroup'>

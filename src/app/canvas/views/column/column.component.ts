@@ -19,9 +19,6 @@ import { ColumnLayoutChangeService } from 'app/canvas/services/column-layout-cha
 export class ColumnComponent implements OnChanges, OnInit {
 
   @Input()
-  prefix: 'element' | 'property' | 'quality';
-
-  @Input()
   width: number;
 
   @Input()
@@ -31,27 +28,10 @@ export class ColumnComponent implements OnChanges, OnInit {
   left = 0;
 
   @Input()
-  header = '';
-
-  @Input()
-  headerTitleColor = '';
-
-  @Input()
   cellGroups: CellGroup[] = [];
-
-  @Input()
-  cellsToGroup: Cell[] = [];
-
-  @Input()
-  cellsToUngroup: Cell[] = [];
-
-  @Output()
-  cellAdded = new EventEmitter<ColumnId>();
 
   @Output()
   cellClicked = new EventEmitter<CellSelectionEvent>();
-
-  readonly headerHeight = 100;
 
   private static readonly _MINIMUM_SPACING_BETWEEN_GROUPS = 10;
   private _defaultCellGroup: CellGroup;
@@ -92,7 +72,7 @@ export class ColumnComponent implements OnChanges, OnInit {
       return 0;
     const totalHeightOfNonDefaultGroups = this._calculateTotalHeightOfNonDefaultGroups();
     const heightOfAllCellsInDefaultGroup = this._defaultCellGroup.cells.reduce((sum, cell) => sum + cell.height, 0);
-    const remainingHeight = this.height - this.headerHeight - totalHeightOfNonDefaultGroups - heightOfAllCellsInDefaultGroup;
+    const remainingHeight = this.height - totalHeightOfNonDefaultGroups - heightOfAllCellsInDefaultGroup;
     if (this._defaultCellGroup.size() === 0)
       return Math.max(ColumnComponent._MINIMUM_SPACING_BETWEEN_GROUPS, remainingHeight / this.cellGroups.length);
     // For "n" items, there are "n + 1" spacings between them
@@ -106,34 +86,30 @@ export class ColumnComponent implements OnChanges, OnInit {
   }
 
   private _updateTopAndLeftPositionsOfAllGroups(spacingBetweenGroups: number) {
-    let currentTop = spacingBetweenGroups + this.headerHeight;
+    let currentTop = spacingBetweenGroups;
     for (const cellGroup of this.cellGroups) {
       cellGroup.top = currentTop;
       cellGroup.left = this.left;
-      currentTop = Math.max(this.headerHeight, currentTop + cellGroup.height + spacingBetweenGroups);
+      currentTop = Math.max(0, currentTop + cellGroup.height + spacingBetweenGroups);
     }
   }
 
   private _calculateDefaultGroupHeight(spacingBetweenGroups: number) {
     if (this.cellGroups.length === 1)
-      this._defaultCellGroup.height = this.height - this.headerHeight;
+      this._defaultCellGroup.height = this.height;
     else if (this._defaultCellGroup.size() > 0) {
       const totalHeightOfNonDefaultGroups = this._calculateTotalHeightOfNonDefaultGroups();
-      this._defaultCellGroup.height = this.height - this.headerHeight
+      this._defaultCellGroup.height = this.height - totalHeightOfNonDefaultGroups
         // For "N" groups, there are "N + 1" spacings between them
         // But because the default group is in the cell groups array
         // The number of spacings is 1 less than cell groups array's length
         // Instead of length + 1
-        - totalHeightOfNonDefaultGroups - spacingBetweenGroups * (this.cellGroups.length + 1);
+        - spacingBetweenGroups * (this.cellGroups.length + 1);
     }
   }
 
   cellGroupArrayTrackBy(_, cellGroup: CellGroup) {
     return cellGroup.size();
-  }
-
-  addCell() {
-    this.cellAdded.emit(this.prefix);
   }
 
   @HostListener('click', ['$event.target.parentElement', '$event'])

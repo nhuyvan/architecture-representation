@@ -11,9 +11,10 @@ import { ColorPickerComponent } from './views/color-picker/color-picker.componen
 import { CellComponent } from './views/cell/cell.component';
 import { CellGroupComponent } from './views/cell-group/cell-group.component';
 import { MatricesComponent } from './views/matrices/matrices.component';
+import { ColumnHeaderComponent } from './views/column-header/column-header.component';
 
 @NgModule({
-  declarations: [CanvasComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent, CellComponent, CellGroupComponent, MatricesComponent],
+  declarations: [CanvasComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent, CellComponent, CellGroupComponent, MatricesComponent, ColumnHeaderComponent],
   imports: [
     CommonModule,
     SharedModule

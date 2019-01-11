@@ -27,6 +27,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
 
   columnWidth = 0;
   columnHeight = 0;
+  readonly headerHeight = 100;
   spacingBetweenColumns = 0;
   linkTable = new Map<Cell, Array<Link>>();
   selectedLink: Link;
@@ -43,15 +44,15 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   selectedCells: Cell[] = [];
   showAssociations = false;
 
-  private _canvas: SVGSVGElement;
-  private _canvasRect: ClientRect;
+  private _canvasContainer: SVGSVGElement;
+  private _canvasContainerRect: ClientRect;
   private _canvasInitialHeight = 0;
 
   constructor(
     private _changeDetector: ChangeDetectorRef,
     private _columnLayoutChange: ColumnLayoutChangeService,
     private _commandService: CommandService,
-    @Host() private readonly _canvasContainerRef: ElementRef<HTMLElement>,
+    @Host() private readonly _hostElement: ElementRef<HTMLElement>,
     private _matDialog: MatDialog
   ) {
   }
@@ -59,14 +60,14 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   ngAfterViewInit() {
     // ExpressionChangedAfterItHasBeenCheckedError avoidance because this is ngAfterViewInit
     setTimeout(() => {
-      this._canvas = this._canvasContainerRef.nativeElement.firstElementChild as SVGSVGElement;
-      this._canvasRect = this._canvas.getBoundingClientRect();
+      this._canvasContainer = this._hostElement.nativeElement.firstElementChild as SVGSVGElement;
+      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
       // 12.5% each
-      this.spacingBetweenColumns = this._canvasRect.width * 12.5 / 100;
+      this.spacingBetweenColumns = this._canvasContainerRect.width * 12.5 / 100;
       // 25% each
-      this.columnWidth = this._canvasRect.width * 25 / 100;
-      this.columnHeight = this._canvasRect.height;
-      this._canvasInitialHeight = this._canvasRect.height;
+      this.columnWidth = this._canvasContainerRect.width * 25 / 100;
+      this.columnHeight = this._canvasContainerRect.height - this.headerHeight;
+      this._canvasInitialHeight = this.columnHeight;
       this._changeDetector.markForCheck();
     }, 1000);
   }
@@ -183,7 +184,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   }
 
   private _exportGraphAsPng() {
-    const graph = this._canvas.cloneNode(true) as SVGElement;
+    const graph = this._canvasContainer.cloneNode(true) as SVGElement;
     document.body.appendChild(graph);
     graph.querySelectorAll('.icon-container')
       .forEach(addButton => addButton.parentElement.removeChild(addButton));
@@ -214,36 +215,35 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   }
 
   private _expandCanvasIfCellOverflowsColumn(cell: Cell) {
-    const difference = (cell.top + cell.height) - this._canvasRect.height;
+    const difference = (cell.top + cell.height) - this.columnHeight;
     if (difference > 0) {
-      this._canvas.style.height = this._canvasRect.height
+      this._canvasContainer.style.height = this._canvasContainerRect.height
         + difference + 5
-        + this._canvasContainerRef.nativeElement.scrollTop
+        + this._hostElement.nativeElement.scrollTop
         + 'px';
-      this._canvasRect = this._canvas.getBoundingClientRect();
-      this.columnHeight = this._canvasRect.height;
+      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
+      this.columnHeight = this._canvasContainerRect.height - this.headerHeight;
     }
   }
 
   private _shrinkCanvasIfTooMuchEmptyVerticalSpace() {
-    const largestColumnActualHeight = Object.values(this.columns)
-      .map(cells => this._calculateActualColumnHeight(cells))
-      .reduce((largest, columnActualHeight) => Math.max(largest, columnActualHeight), 0);
+    const largestMinimumColumnHeight = Object.values(this.columns)
+      .map(cells => this._calculateMinimumColumnHeight(cells))
+      .reduce((largest, columnMinimumHeight) => Math.max(largest, columnMinimumHeight), 0);
 
-    const emptyVerticalSpace = this._canvasRect.height - largestColumnActualHeight;
+    const emptyVerticalSpace = this.columnHeight - largestMinimumColumnHeight;
     // 10 is the padding between the last cell and the canvas bottom border
     if (emptyVerticalSpace > 10) {
-      const adjustedHeight = Math.max(this._canvasRect.height - (emptyVerticalSpace - 10), this._canvasInitialHeight);
-      this._canvas.style.height = adjustedHeight + 'px';
+      const adjustedHeight = Math.max(this.columnHeight - (emptyVerticalSpace - 10), this._canvasInitialHeight);
+      this._canvasContainer.style.height = (adjustedHeight + this.headerHeight) + 'px';
       this.columnHeight = adjustedHeight;
-      this._canvasRect = this._canvas.getBoundingClientRect();
+      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
     }
   }
 
-  private _calculateActualColumnHeight(cells: Cell[]) {
-    const columnHeaderHeight = 100;
+  private _calculateMinimumColumnHeight(cells: Cell[]) {
     const minimumSpacingBetweenCells = 5;
-    return columnHeaderHeight + this._sumCellHeights(cells) + minimumSpacingBetweenCells * (cells.length + 1);
+    return this._sumCellHeights(cells) + minimumSpacingBetweenCells * (cells.length + 1);
   }
 
   private _sumCellHeights(cells: Cell[]) {

@@ -34,6 +34,7 @@
     "@angular/cli": "~7.0.4",
     "@angular/compiler-cli": "~7.1.4",
     "@angular/language-service": "~7.1.4",
+    "@types/d3": "^5.5.0",
     "@types/jasmine": "~2.8.8",
     "@types/jasminewd2": "~2.0.3",
     "@types/mathjs": "^4.4.4",

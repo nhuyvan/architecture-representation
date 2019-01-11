@@ -21,16 +21,19 @@ export class TextEditorComponent {
 
   snapEditorToCellBoundary(cell: Cell) {
     const canvasScrollContainer = document.querySelector('mapper-canvas');
+    const scrollTop = canvasScrollContainer.scrollTop;
     // If "cell" has value for "column", we are entering input for a cell
     // otherwise, it is for a link
     if (cell.column) {
       const left = canvasScrollContainer.getBoundingClientRect().left;
       this._input.nativeElement.style.left = left + cell.left + 2 + 'px';
+      // 100 is column header height
+      this._input.nativeElement.style.top = (cell.top - scrollTop + 7 + 100) + 'px';
     }
-    else
+    else {
+      this._input.nativeElement.style.top = (cell.top - scrollTop + 7) + 'px';
       this._input.nativeElement.style.left = cell.left + 2 + 'px';
-    const scrollTop = canvasScrollContainer.scrollTop;
-    this._input.nativeElement.style.top = cell.top - scrollTop + 7 + 'px';
+    }
     this._input.nativeElement.style.width = cell.width - 4 + 'px';
     this._input.nativeElement.style.height = cell.height - 7 + 'px';
     this._input.nativeElement.style.whiteSpace = 'pre';

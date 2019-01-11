@@ -1,18 +1,4 @@
 g.column {
-    header {
-        text-align: center;
-        display: flex;
-        flex-flow: column nowrap;
-        align-items: center;
-        position: relative;
-        pointer-events: none;
-    }
-    .column__title {
-        display: inline-block;
-        padding: 10px 20px;
-        font-size: 1.25em;
-        user-select: none;
-    }
     rect {
         cursor: pointer;
         user-select: none;
