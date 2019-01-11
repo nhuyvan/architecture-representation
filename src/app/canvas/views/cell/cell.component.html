@@ -1,4 +1,5 @@
 <svg:g class='cell'
+       [tooltip]='cell.column === "quality" ? cell.weight + "" : ""'
        #cellElement
        [id]='cell.idSelector'
        [attr.data-id]='cell.id'

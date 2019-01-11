@@ -13,4 +13,5 @@ export interface Cell {
   domInstance: SVGGElement;
   cellGroup: CellGroup;
   isOn: boolean;
+  weight: number;
 }

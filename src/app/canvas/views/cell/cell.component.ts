@@ -29,12 +29,25 @@ export class CellComponent implements AfterViewInit {
     (this._cellElementRef.nativeElement as any).__cell__ = this.cell;
   }
 
-  @HostListener('dblclick', ['$event.target.parentElement', '$event'])
-  showTextEditor(target: HTMLElement | SVGGElement, event: MouseEvent) {
-    event.stopPropagation();
-    if (target.hasAttribute('data-cell')) {
+  @HostListener('click', ['$event.target.parentElement.hasAttribute("data-cell")', '$event'])
+  showEditorToAddWeightForQualityCell(isCell: boolean, event: MouseEvent) {
+    if ((event.ctrlKey || event.metaKey) && isCell) {
       event.stopPropagation();
-      this._textEditorService.show(this.cell)
+      this._textEditorService.show(this.cell, String(this.cell.weight))
+        .textAdded((payload, cellBeingEdited) => {
+          const weight = +payload.text;
+          if (weight >= 0 && weight <= 1)
+            cellBeingEdited.weight = weight;
+        });
+    }
+
+  }
+
+  @HostListener('dblclick', ['$event.target.parentElement.hasAttribute("data-cell")', '$event'])
+  showTextEditor(isCell: boolean, event: MouseEvent) {
+    if (isCell) {
+      event.stopPropagation();
+      this._textEditorService.show(this.cell, this.cell.text)
         .textAdded((payload, cellBeingEdited) =>
           this._onTextAdded(payload, cellBeingEdited));
     }

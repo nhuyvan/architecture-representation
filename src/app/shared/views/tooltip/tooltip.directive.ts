@@ -14,8 +14,10 @@ export class TooltipDirective {
 
   @HostListener('mouseover', ['$event'])
   onMouseOver(event: MouseEvent) {
-    event.stopPropagation();
-    this._tooltipService.show(event.currentTarget as any, this.content, this.position);
+    if (this.content.length > 0) {
+      event.stopPropagation();
+      this._tooltipService.show(event.currentTarget as any, this.content, this.position);
+    }
   }
 
   @HostListener('mouseout')

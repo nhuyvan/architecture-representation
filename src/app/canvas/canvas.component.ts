@@ -257,6 +257,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
         this._deleteSelectedCells();
         this._ungroupSelectedCells(false);
         this.selectedCells = [];
+        this._commandService.select(Command.ACTIVATE_CELL_GROUPING);
         setTimeout(() => {
           this._notifyChanges(null);
           this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
@@ -355,7 +356,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
       idSelector: `${columnId}-cell-${id}`,
       domInstance: null,
       cellGroup: null,
-      isOn: true
+      isOn: true,
+      weight: 0
     }
   }
 
