@@ -1,20 +1,20 @@
 <mapper-command [icon]='showAssociationsSelected ? "visibility_off" : "visibility"'
                 [tooltip]='showAssociationsSelected ? "Hide associations for selected components" : "Show associations for selected components"'
-                (toggled)='toggleShowAssociations($event)'>
+                (clicked)='toggleShowAssociations()'>
 </mapper-command>
 <mapper-command [icon]='cellGroupingSelected ? "layers" : "layers_clear"'
                 [tooltip]='cellGroupingSelected ? "Group selected cells" : "Ungroup selected cells"'
-                (toggled)='toggleCellGrouping($event)'>
+                (clicked)='toggleCellGrouping()'>
 </mapper-command>
 <mapper-command icon='grid_on'
                 tooltip='Show matrices'
-                (toggled)='showMatrices()'>
+                (clicked)='showMatrices()'>
 </mapper-command>
 <mapper-command [icon]='turnOffCellSelected ? "not_interested" : "check"'
                 [tooltip]='turnOffCellSelected ? "Turn off selected cells" : "Turn on selected cells"'
-                (toggled)='turnCellOnOrOff($event)'>
+                (clicked)='turnCellOnOrOff()'>
 </mapper-command>
 <mapper-command icon='arrow_downward'
                 tooltip='Export graph as PNG'
-                (toggled)='exportGraphAsPng()'>
+                (clicked)='exportGraphAsPng()'>
 </mapper-command>

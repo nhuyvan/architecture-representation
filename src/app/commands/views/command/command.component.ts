@@ -16,19 +16,16 @@ export class CommandComponent implements OnInit {
   tooltip = '';
 
   @Output()
-  toggled = new EventEmitter<boolean>();
-
-  isOn = true;
+  clicked = new EventEmitter<boolean>();
 
   constructor(private _tooltipService: TooltipService) { }
 
   ngOnInit() {
   }
 
-  toggle() {
+  click() {
     this._tooltipService.hide();
-    this.toggled.next(this.isOn);
-    this.isOn = !this.isOn;
+    this.clicked.next();
   }
 
 }

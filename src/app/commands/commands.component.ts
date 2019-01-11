@@ -48,8 +48,8 @@ export class CommandsComponent implements OnInit {
     this.showAssociationsSelected = !this.showAssociationsSelected;
   }
 
-  toggleCellGrouping(state: boolean) {
-    this._commandService.select(state ? Command.GROUP_CELLS : Command.UNGROUP_CELLS);
+  toggleCellGrouping() {
+    this._commandService.select(this.cellGroupingSelected ? Command.GROUP_CELLS : Command.UNGROUP_CELLS);
     this.cellGroupingSelected = !this.cellGroupingSelected;
   }
 
