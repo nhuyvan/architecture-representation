@@ -62,4 +62,8 @@ export class CommandsComponent implements OnInit {
     this.turnOffCellSelected = !this.turnOffCellSelected;
   }
 
+  exportGraphAsPng() {
+    this._commandService.select(Command.EXPORT_GRAPH_AS_PNG);
+  }
+
 }

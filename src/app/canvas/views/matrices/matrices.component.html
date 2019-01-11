@@ -1,9 +1,8 @@
 <mat-dialog-content>
     <div class='matrix'
          *ngFor='let matrix of matrices'>
-        <h1 class='matrix__name'>
-            {{matrix.name}} =
-        </h1>
+        <h1 class='matrix__name'>{{matrix.name}}</h1>
+        <h1>=</h1>
         <table class='matrix__entries'>
             <tbody>
                 <tr *ngFor='let row of matrix.entries'>
@@ -16,5 +15,7 @@
 <mat-dialog-actions>
     <button mat-button
             color='primary'
-            mat-dialog-close>Close</button>
+            mat-dialog-close>
+        Close
+    </button>
 </mat-dialog-actions>

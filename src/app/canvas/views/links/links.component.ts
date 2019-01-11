@@ -108,8 +108,8 @@ export class LinksComponent implements OnChanges, AfterViewInit {
       text: String(link.weight)
     } as Cell;
     this._textEditorService.show(cell)
-      .textAdded(value => {
-        const weight = +value;
+      .textAdded(payload => {
+        const weight = +payload.text;
         if (weight > 0)
           link.weight = weight;
       });

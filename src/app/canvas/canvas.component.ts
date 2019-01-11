@@ -1,8 +1,9 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation, HostListener, OnInit, Host } from '@angular/core';
+import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation, HostListener, OnInit, Host } from '@angular/core';
 import { zeros, Matrix, multiply, ones, subtract, matrix } from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
-import { MatricesComponent } from './views/matrices/matrices.component';
+import { svgAsPngUri, download } from 'save-svg-as-png';
 
+import { MatricesComponent } from './views/matrices/matrices.component';
 import { Link } from './models/Link';
 import { Column, ColumnId } from './models/Column';
 import { Cell } from './models/Cell';
@@ -95,6 +96,9 @@ export class CanvasComponent implements AfterViewInit, OnInit {
           case Command.TURN_CELL_OFF:
             this._turnCellsOnOrOff(false);
             break;
+          case Command.EXPORT_GRAPH_AS_PNG:
+            this._exportGraphAsPng();
+            break;
         }
       });
   }
@@ -157,14 +161,16 @@ export class CanvasComponent implements AfterViewInit, OnInit {
         }
       }
     });
-    const Dq = multiply(R, L);
+    const Dq = multiply(R, L) as Matrix;
     // T = R (L - Dp) – Dq
     const T = subtract(multiply(R, subtract(L, Dp)), Dq) as Matrix;
 
     this._matDialog.open(MatricesComponent, {
       data: [
         { name: 'L', entries: L.toArray() },
+        { name: 'Dp', entries: Dp.toArray() },
         { name: 'R', entries: R.toArray() },
+        { name: 'Dq', entries: Dq.toArray() },
         { name: 'T', entries: T.toArray() }
       ]
     });
@@ -175,6 +181,20 @@ export class CanvasComponent implements AfterViewInit, OnInit {
       .forEach(cell => cell.isOn = onOrOff);
     this._changeDetector.detectChanges();
   }
+
+  private _exportGraphAsPng() {
+    const graph = this._canvas.cloneNode(true) as SVGElement;
+    document.body.appendChild(graph);
+    graph.querySelectorAll('.icon-container')
+      .forEach(addButton => addButton.parentElement.removeChild(addButton));
+    graph.querySelectorAll('*[data-selected]')
+      .forEach(selected => selected.removeAttribute('data-selected'));
+    svgAsPngUri(graph, {}, (uri: string) => {
+      download('graph.png', uri);
+      document.body.removeChild(graph);
+    });
+  }
+
   private _onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {
     switch (layoutChange.type) {
       case ColumnLayoutChangeType.CELL_ADDED:

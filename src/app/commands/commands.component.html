@@ -14,3 +14,7 @@
                 [tooltip]='turnOffCellSelected ? "Turn off selected cells" : "Turn on selected cells"'
                 (toggled)='turnCellOnOrOff($event)'>
 </mapper-command>
+<mapper-command icon='arrow_downward'
+                tooltip='Export graph as PNG'
+                (toggled)='exportGraphAsPng()'>
+</mapper-command>

@@ -4,9 +4,13 @@
     margin: 1em 0;
 }
 
-.matrix__name {
-    margin: 1em 0;
+h1 {
     margin-right: 0.5em;
+}
+
+.matrix__name {
+    width: 1em;
+    text-align: right;
 }
 
 .matrix__entries {
