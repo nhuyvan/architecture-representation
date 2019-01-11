@@ -1,0 +1,20 @@
+<mat-dialog-content>
+    <div class='matrix'
+         *ngFor='let matrix of matrices'>
+        <h1 class='matrix__name'>
+            {{matrix.name}} =
+        </h1>
+        <table class='matrix__entries'>
+            <tbody>
+                <tr *ngFor='let row of matrix.entries'>
+                    <td *ngFor='let entry of row'>{{entry}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+    <button mat-button
+            color='primary'
+            mat-dialog-close>Close</button>
+</mat-dialog-actions>

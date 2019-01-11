@@ -1,0 +1,44 @@
+.matrix {
+    display: flex;
+    align-items: center;
+    margin: 1em 0;
+}
+
+.matrix__name {
+    margin: 1em 0;
+    margin-right: 0.5em;
+}
+
+.matrix__entries {
+    border-left: 2px solid #000;
+    border-right: 2px solid #000;
+    min-width: 5em;
+    text-align: center;
+    position: relative;
+    &::before,
+    &::after,
+    tbody::before,
+    tbody::after {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 2px;
+        background: #000;
+        left: 0;
+        top: 0;
+    }
+    &::after {
+        top: calc(100% - 2px);
+    }
+    td {
+        padding: 0 0.7em;
+    }
+    tbody::before {
+        left: calc(100% - 10px);
+        top: 0;
+    }
+    tbody::after {
+        left: calc(100% - 10px);
+        top: calc(100% - 2px);
+    }
+}

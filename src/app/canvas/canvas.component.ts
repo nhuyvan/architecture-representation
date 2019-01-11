@@ -1,5 +1,7 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation, HostListener, OnInit, Host } from '@angular/core';
-import { zeros, Matrix } from 'mathjs';
+import { zeros, Matrix, multiply, ones, subtract, matrix } from 'mathjs';
+import { MatDialog } from '@angular/material/dialog';
+import { MatricesComponent } from './views/matrices/matrices.component';
 
 import { Link } from './models/Link';
 import { Column, ColumnId } from './models/Column';
@@ -48,7 +50,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
     private _changeDetector: ChangeDetectorRef,
     private _columnLayoutChange: ColumnLayoutChangeService,
     private _commandService: CommandService,
-    @Host() private readonly _canvasContainerRef: ElementRef<HTMLElement>
+    @Host() private readonly _canvasContainerRef: ElementRef<HTMLElement>,
+    private _matDialog: MatDialog
   ) {
   }
 
@@ -140,11 +143,13 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   private _showMatrices() {
     const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
     const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
+    const Dp = matrix(ones(L.size()));
     this.linkTable.forEach(links => {
       for (const link of links) {
         switch (link.source.column) {
           case 'element':
             L.set([link.target.id, link.source.id], 1);
+            Dp.set([link.target.id, link.source.id], 0);
             break;
           case 'property':
             R.set([link.target.id, link.source.id], 1);
@@ -152,8 +157,17 @@ export class CanvasComponent implements AfterViewInit, OnInit {
         }
       }
     });
-    console.log('L matrix:', L);
-    console.log('R matrix:', R);
+    const Dq = multiply(R, L);
+    // T = R (L - Dp) – Dq
+    const T = subtract(multiply(R, subtract(L, Dp)), Dq) as Matrix;
+
+    this._matDialog.open(MatricesComponent, {
+      data: [
+        { name: 'L', entries: L.toArray() },
+        { name: 'R', entries: R.toArray() },
+        { name: 'T', entries: T.toArray() }
+      ]
+    });
   }
 
   private _turnCellsOnOrOff(onOrOff: boolean) {
