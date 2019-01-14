@@ -2,6 +2,7 @@ import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDe
 import { zeros, Matrix, multiply, ones, subtract, matrix } from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
+import { Observable } from 'rxjs';
 
 import { MatricesComponent } from './views/matrices/matrices.component';
 import { Link } from './models/Link';
@@ -12,18 +13,18 @@ import { CellSelectionEvent, CellSelectionEventType } from './models/CellSelecti
 import { ColumnLayoutChangeService } from './services/column-layout-change.service';
 import { CellGroup } from './models/CellGroup';
 import { CommandService, Command } from '@shared/services/command.service';
+import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.component';
 
 @Component({
-  selector: 'mapper-canvas',
-  templateUrl: './canvas.component.html',
-  styleUrls: ['./canvas.component.scss'],
+  selector: 'mapper-graph',
+  templateUrl: './graph.component.html',
+  styleUrls: ['./graph.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
   host: {
     class: 'frame'
   }
 })
-export class CanvasComponent implements AfterViewInit, OnInit {
+export class GraphComponent implements AfterViewInit, OnInit {
 
   columnWidth = 0;
   columnHeight = 0;
@@ -47,6 +48,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   private _canvasContainer: SVGSVGElement;
   private _canvasContainerRect: ClientRect;
   private _canvasInitialHeight = 0;
+  private _Dp: Matrix;
+  private _Dq: Matrix;
 
   constructor(
     private _changeDetector: ChangeDetectorRef,
@@ -100,6 +103,28 @@ export class CanvasComponent implements AfterViewInit, OnInit {
           case Command.EXPORT_GRAPH_AS_PNG:
             this._exportGraphAsPng();
             break;
+          case Command.EDIT_Dp_DETRACTOR_MATRIX:
+            if (this._Dp)
+              this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length]);
+            else
+              this._Dp = matrix(ones(this.columns.property.length, this.columns.element.length));
+            this.linkTable.forEach(links => {
+              for (const link of links)
+                if (link.source.column === 'element')
+                  this._Dp.set([link.target.id, link.source.id], 0);
+            });
+            this._showMatrixEditor('Dp', this._Dp)
+              .subscribe(matrix => this._Dp = matrix);
+            break;
+          case Command.EDIT_Dq_DETRACTOR_MATRIX:
+            if (this._Dq)
+              this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.property.length]);
+            else
+              this._Dq = matrix(zeros(this.columns.quality.length, this.columns.element.length));
+
+            this._showMatrixEditor('Dq', this._Dq)
+              .subscribe(matrix => this._Dq = matrix);
+            break;
         }
       });
   }
@@ -148,30 +173,34 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   private _showMatrices() {
     const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
     const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
-    const Dp = matrix(ones(L.size()));
+    if (!this._Dp)
+      this._Dp = matrix(zeros(this.columns.property.length, this.columns.element.length))
+    if (!this._Dq)
+      // Dq has size of RL
+      this._Dq = matrix(zeros(this.columns.quality.length, this.columns.element.length));
     this.linkTable.forEach(links => {
       for (const link of links) {
         switch (link.source.column) {
           case 'element':
             L.set([link.target.id, link.source.id], 1);
-            Dp.set([link.target.id, link.source.id], 0);
+            this._Dp.set([link.target.id, link.source.id], 0);
             break;
           case 'property':
             R.set([link.target.id, link.source.id], 1);
+            this._Dq.set([link.target.id, link.source.id], 0);
             break;
         }
       }
     });
-    const Dq = multiply(R, L) as Matrix;
     // T = R (L - Dp) – Dq
-    const T = subtract(multiply(R, subtract(L, Dp)), Dq) as Matrix;
+    const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
 
     this._matDialog.open(MatricesComponent, {
       data: [
         { name: 'L', entries: L.toArray() },
-        { name: 'Dp', entries: Dp.toArray() },
+        { name: 'Dp', entries: this._Dp.toArray() },
         { name: 'R', entries: R.toArray() },
-        { name: 'Dq', entries: Dq.toArray() },
+        { name: 'Dq', entries: this._Dq.toArray() },
         { name: 'T', entries: T.toArray() }
       ]
     });
@@ -194,6 +223,17 @@ export class CanvasComponent implements AfterViewInit, OnInit {
       download('graph.png', uri);
       document.body.removeChild(graph);
     });
+  }
+
+  private _showMatrixEditor(matrixName: string, matrix: Matrix): Observable<Matrix> {
+    this.selectedCells = [];
+    this.selectedLink = null;
+    this._changeDetector.detectChanges();
+    return this._matDialog.open(MatrixEditorComponent, {
+      data: { matrixName, matrix },
+      disableClose: true,
+      autoFocus: false
+    }).afterClosed();
   }
 
   private _onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {

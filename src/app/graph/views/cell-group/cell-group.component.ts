@@ -3,7 +3,7 @@ import { Component, Input, Host, ElementRef, OnChanges, OnDestroy } from '@angul
 import { CellGroup } from '../../models/CellGroup';
 import { Cell } from '../../models/Cell';
 import { ColumnLayoutChangeType } from '../../models/ColumnLayoutChange';
-import { ColumnLayoutChangeService } from 'app/canvas/services/column-layout-change.service';
+import { ColumnLayoutChangeService } from '../../services/column-layout-change.service';
 
 @Component({
   selector: 'g[cell-group]',

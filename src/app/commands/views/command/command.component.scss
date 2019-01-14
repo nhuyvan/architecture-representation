@@ -1,3 +1,10 @@
-:host {
+mapper-command {
     margin-bottom: 10px;
+}
+
+.matrix-dp i.command-button__icon.material-icons,
+.matrix-dq i.command-button__icon.material-icons {
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    font-size: 1.25em;
+    font-weight: bold;
 }

@@ -64,6 +64,14 @@ export class CommandsComponent implements OnInit {
 
   exportGraphAsPng() {
     this._commandService.select(Command.EXPORT_GRAPH_AS_PNG);
+    this._commandService.select(Command.EXPORT_GRAPH_AS_PNG);
   }
 
+  editDpDetractorMatrix() {
+    this._commandService.select(Command.EDIT_Dp_DETRACTOR_MATRIX);
+  }
+
+  editDqDetractorMatrix() {
+    this._commandService.select(Command.EDIT_Dq_DETRACTOR_MATRIX);
+  }
 }

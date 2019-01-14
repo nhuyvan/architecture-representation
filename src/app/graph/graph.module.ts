@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { CanvasComponent } from './canvas.component';
+import { GraphComponent } from './graph.component';
 import { ColumnComponent } from './views/column/column.component';
 import { SharedModule } from '@shared/shared.module';
 import { LinksComponent } from './views/links/links.component';
@@ -12,14 +12,15 @@ import { CellComponent } from './views/cell/cell.component';
 import { CellGroupComponent } from './views/cell-group/cell-group.component';
 import { MatricesComponent } from './views/matrices/matrices.component';
 import { ColumnHeaderComponent } from './views/column-header/column-header.component';
+import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.component';
 
 @NgModule({
-  declarations: [CanvasComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent, CellComponent, CellGroupComponent, MatricesComponent, ColumnHeaderComponent],
+  declarations: [GraphComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent, CellComponent, CellGroupComponent, MatricesComponent, ColumnHeaderComponent, MatrixEditorComponent],
   imports: [
     CommonModule,
     SharedModule
   ],
-  exports: [CanvasComponent],
-  entryComponents: [TextEditorComponent, ColorPickerComponent, MatricesComponent]
+  exports: [GraphComponent],
+  entryComponents: [TextEditorComponent, ColorPickerComponent, MatricesComponent, MatrixEditorComponent]
 })
-export class CanvasModule { }
+export class GraphModule { }

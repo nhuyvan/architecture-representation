@@ -1,0 +1,26 @@
+<div class='matrix'
+     mat-dialog-content>
+    <h1 class='matrix__name'>{{matrixName}}</h1>
+    <h1>=</h1>
+    <table class='matrix__entries'>
+        <tbody>
+            <tr *ngFor='let row of entries;let rowIndex=index'>
+                <td *ngFor='let entry of row;let columnIndex=index'>
+                    <input (change)='updateEntry(rowIndex, columnIndex, $event.target)'
+                           [value]='entry' />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div mat-dialog-actions>
+    <button mat-button
+            [mat-dialog-close]='input.matrix'>
+        Cancel
+    </button>
+    <button mat-button
+            color='primary'
+            [mat-dialog-close]='newMatrix'>
+        Save
+    </button>
+</div>

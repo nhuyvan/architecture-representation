@@ -1,11 +1,9 @@
 import { Component, Input, ViewEncapsulation, Output, EventEmitter, OnChanges, SimpleChanges, OnInit, HostListener } from '@angular/core';
 
-import { Cell } from '../../models/Cell';
 import { ColumnLayoutChangeType } from '../../models/ColumnLayoutChange';
-import { ColumnId } from '../../models/Column';
 import { CellSelectionEvent, CellSelectionEventType } from '../../models/CellSelectionEvent';
 import { CellGroup } from '../../models/CellGroup';
-import { ColumnLayoutChangeService } from 'app/canvas/services/column-layout-change.service';
+import { ColumnLayoutChangeService } from '../../services/column-layout-change.service';
 
 @Component({
   selector: 'g[column]',

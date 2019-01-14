@@ -1,11 +1,12 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewEncapsulation } from '@angular/core';
 
 import { TooltipService } from '@shared/views/tooltip/tooltip.service';
 
 @Component({
   selector: 'mapper-command',
   templateUrl: './command.component.html',
-  styleUrls: ['./command.component.scss']
+  styleUrls: ['./command.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class CommandComponent implements OnInit {
 
