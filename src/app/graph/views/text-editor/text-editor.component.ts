@@ -20,7 +20,7 @@ export class TextEditorComponent {
   }
 
   snapEditorToCellBoundary(cell: Cell) {
-    const canvasScrollContainer = document.querySelector('mapper-canvas');
+    const canvasScrollContainer = document.querySelector('mapper-graph');
     const scrollTop = canvasScrollContainer.scrollTop;
     // If "cell" has value for "column", we are entering input for a cell
     // otherwise, it is for a link

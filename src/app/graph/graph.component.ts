@@ -1,5 +1,5 @@
-import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation, HostListener, OnInit, Host } from '@angular/core';
-import { zeros, Matrix, multiply, ones, subtract, matrix } from 'mathjs';
+import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host } from '@angular/core';
+import { zeros, Matrix, multiply, ones, subtract, matrix, transpose, divide, hypot, dot } from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';
@@ -105,7 +105,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
             break;
           case Command.EDIT_Dp_DETRACTOR_MATRIX:
             if (this._Dp)
-              this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length]);
+              this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 1);
             else
               this._Dp = matrix(ones(this.columns.property.length, this.columns.element.length));
             this.linkTable.forEach(links => {
@@ -174,10 +174,14 @@ export class GraphComponent implements AfterViewInit, OnInit {
     const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
     const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
     if (!this._Dp)
-      this._Dp = matrix(zeros(this.columns.property.length, this.columns.element.length))
+      this._Dp = matrix(ones(this.columns.property.length, this.columns.element.length));
+    else
+      this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 1);
     if (!this._Dq)
       // Dq has size of RL
       this._Dq = matrix(zeros(this.columns.quality.length, this.columns.element.length));
+    else
+      this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
     this.linkTable.forEach(links => {
       for (const link of links) {
         switch (link.source.column) {
@@ -192,17 +196,34 @@ export class GraphComponent implements AfterViewInit, OnInit {
         }
       }
     });
+    const e = matrix(this.columns.element.map(cell => cell.isOn ? 1 : 0));
+    // q = [ R (L – Dp) – Dq ] e
+    const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
+
     // T = R (L - Dp) – Dq
     const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
 
+    // r = transpose(w)q0 / || Transpose(w)q0 ||
+    const q0 = matrix(ones(this.columns.quality.length, 1));
+    const w = matrix(this.columns.quality.map(cell => cell.weight));
+    const wTransposeTimesQ0 = multiply(transpose(w), q0) as Matrix;
+    const r = divide(wTransposeTimesQ0, hypot(wTransposeTimesQ0 as any)) as Matrix;
+
+    // A(q , r) = < q , r > /[ ||q|| ||r|| ]
+    const angle = Math.acos(dot(q, r.clone().resize(q.size(), 0)) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
+
     this._matDialog.open(MatricesComponent, {
-      data: [
-        { name: 'L', entries: L.toArray() },
-        { name: 'Dp', entries: this._Dp.toArray() },
-        { name: 'R', entries: R.toArray() },
-        { name: 'Dq', entries: this._Dq.toArray() },
-        { name: 'T', entries: T.toArray() }
-      ]
+      data: {
+        matrices: [
+          { name: 'L', entries: L.toArray() },
+          { name: 'Dp', entries: this._Dp.toArray() },
+          { name: 'R', entries: R.toArray() },
+          { name: 'Dq', entries: this._Dq.toArray() },
+          { name: 'T', entries: T.toArray() },
+          { name: 'r', entries: r.toArray() }
+        ],
+        angle: angle.toFixed(2)
+      }
     });
   }
 

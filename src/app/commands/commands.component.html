@@ -1,30 +1,63 @@
-<mapper-command [icon]='showAssociationsSelected ? "visibility_off" : "visibility"'
-                [tooltip]='showAssociationsSelected ? "Hide associations for selected components" : "Show associations for selected components"'
-                (clicked)='toggleShowAssociations()'>
-</mapper-command>
-<mapper-command [icon]='cellGroupingSelected ? "layers" : "layers_clear"'
-                [tooltip]='cellGroupingSelected ? "Group selected cells" : "Ungroup selected cells"'
-                (clicked)='toggleCellGrouping()'>
-</mapper-command>
-<mapper-command icon='grid_on'
-                tooltip='Show matrices'
-                (clicked)='showMatrices()'>
-</mapper-command>
-<mapper-command [icon]='turnOffCellSelected ? "not_interested" : "check"'
-                [tooltip]='turnOffCellSelected ? "Turn off selected cells" : "Turn on selected cells"'
-                (clicked)='turnCellOnOrOff()'>
-</mapper-command>
-<mapper-command icon='arrow_downward'
-                tooltip='Export graph as PNG'
-                (clicked)='exportGraphAsPng()'>
-</mapper-command>
-<mapper-command icon='Dp'
-                class='matrix-dp'
-                tooltip='Edit Dp matrix'
-                (clicked)='editDpDetractorMatrix()'>
-</mapper-command>
-<mapper-command icon='Dq'
-                class='matrix-dq'
-                tooltip='Edit Dq matrix'
-                (clicked)='editDqDetractorMatrix()'>
-</mapper-command>
+<button mat-mini-fab
+        color='basic'
+        [tooltip]='showAssociationsSelected ? "Hide associations for selected components" : "Show associations for selected components"'
+        position='right'
+        (click)='toggleShowAssociations()'>
+    <mat-icon>
+        {{showAssociationsSelected ? "visibility_off" : "visibility"}}
+    </mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
+        [tooltip]='cellGroupingSelected ? "Group selected cells" : "Ungroup selected cells"'
+        position='right'
+        (click)='toggleCellGrouping()'>
+    <mat-icon>
+        {{cellGroupingSelected ? "layers" : "layers_clear"}}
+    </mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
+        tooltip='Show matrices'
+        position='right'
+        (click)='showMatrices()'>
+    <mat-icon>grid_on</mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
+        [tooltip]='turnOffCellSelected ? "Turn off selected cells" : "Turn on selected cells"'
+        position='right'
+        (click)='turnCellOnOrOff()'>
+    <mat-icon>
+        {{turnOffCellSelected ? "not_interested" : "check"}}
+    </mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
+        tooltip='Export graph as PNG'
+        position='right'
+        (click)='exportGraphAsPng()'>
+    <mat-icon>arrow_downward</mat-icon>
+</button>
+
+<button mat-mini-fab
+        class='edit-matrix'
+        color='basic'
+        tooltip='Edit Dp matrix'
+        position='right'
+        (click)='editDpDetractorMatrix()'>
+    <mat-icon>Dp</mat-icon>
+</button>
+
+<button mat-mini-fab
+        class='edit-matrix'
+        color='basic'
+        tooltip='Edit Dq matrix'
+        position='right'
+        (click)='editDqDetractorMatrix()'>
+    <mat-icon>Dq</mat-icon>
+</button>

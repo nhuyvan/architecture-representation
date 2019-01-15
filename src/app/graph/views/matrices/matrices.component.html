@@ -6,10 +6,19 @@
         <table class='matrix__entries'>
             <tbody>
                 <tr *ngFor='let row of matrix.entries'>
-                    <td *ngFor='let entry of row'>{{entry}}</td>
+                    <ng-container *ngIf='row.length > 0;else vector'>
+                        <td *ngFor='let entry of row'>{{entry}}</td>
+                    </ng-container>
+                    <ng-template #vector>
+                        <td>{{row}}</td>
+                    </ng-template>
                 </tr>
             </tbody>
         </table>
+    </div>
+    <hr />
+    <div class='angle'>
+        <strong>A&lt;q, r&gt; = </strong>{{angle}}
     </div>
 </mat-dialog-content>
 <mat-dialog-actions>

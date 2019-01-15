@@ -31,16 +31,21 @@ export class CellComponent implements AfterViewInit {
 
   @HostListener('click', ['$event.target.parentElement.hasAttribute("data-cell")', '$event'])
   showEditorToAddWeightForQualityCell(isCell: boolean, event: MouseEvent) {
-    if ((event.ctrlKey || event.metaKey) && isCell) {
+    if ((event.ctrlKey || event.metaKey) && isCell && this.cell.column === 'quality') {
       event.stopPropagation();
       this._textEditorService.show(this.cell, String(this.cell.weight))
         .textAdded((payload, cellBeingEdited) => {
           const weight = +payload.text;
-          if (weight >= 0 && weight <= 1)
+          if (weight >= 0 && weight <= 1) {
             cellBeingEdited.weight = weight;
+            this._updateWeightValueForCell(weight);
+          }
         });
     }
+  }
 
+  private _updateWeightValueForCell(weight: number) {
+    this.cell.domInstance.querySelector('.cell__weight').textContent = String(weight);
   }
 
   @HostListener('dblclick', ['$event.target.parentElement.hasAttribute("data-cell")', '$event'])
