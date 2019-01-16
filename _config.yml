@@ -1,1 +1,1 @@
-include: main.76e1766d4d0a5cb4172f.js, polyfills.c6871e56cb80756a5498.js, runtime.ec2944dd8b20ec099bf3.js, styles.ac2776a8653d226e583b
+include: [./main.76e1766d4d0a5cb4172f.js, ./polyfills.c6871e56cb80756a5498.js, ./runtime.ec2944dd8b20ec099bf3.js, ./styles.ac2776a8653d226e583b.css]
