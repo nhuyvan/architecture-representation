@@ -1,6 +1,21 @@
 .cell {
     stroke: #000;
     fill: #fff;
+    cursor: pointer;
+    user-select: none;
+    foreignObject {
+        pointer-events: none;
+    }
+}
+
+.cell[data-selected] {
+    stroke-dasharray: 4;
+}
+
+.cell[data-highlighted],
+.cell[data-highlighted] {
+    opacity: 1 !important;
+    stroke-opacity: 1;
 }
 
 .cell[data-off=true] {

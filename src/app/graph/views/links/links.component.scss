@@ -7,11 +7,13 @@
         }
     }
     g[data-selected] .link {
+        opacity: 1;
         stroke-width: 4;
         stroke-opacity: 1;
     }
     g[data-highlighted] .link {
-        stroke-opacity: 1
+        stroke-opacity: 1;
+        opacity: 1;
     }
     .link {
         stroke-width: 1px;
@@ -20,4 +22,5 @@
 
 .links.highlighting g:not(.selected) {
     stroke-opacity: 0.1;
+    opacity: 1;
 }

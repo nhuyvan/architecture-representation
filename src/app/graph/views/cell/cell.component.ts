@@ -1,4 +1,4 @@
-import { Component, Input, ElementRef, ViewChild, AfterViewInit, HostListener } from '@angular/core';
+import { Component, Input, ElementRef, ViewChild, AfterViewInit, HostListener, ViewEncapsulation } from '@angular/core';
 
 import { Cell } from '../../models/Cell';
 import { TextEditorService } from '../text-editor/text-editor.service';
@@ -8,7 +8,8 @@ import { ColumnLayoutChangeType } from '../../models/ColumnLayoutChange';
 @Component({
   selector: 'g[cell]',
   templateUrl: './cell.component.html',
-  styleUrls: ['./cell.component.scss']
+  styleUrls: ['./cell.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class CellComponent implements AfterViewInit {
 

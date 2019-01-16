@@ -1,4 +1,4 @@
-:host {
+mapper-graph {
     display: block;
     width: 95vw;
     height: 99vh;
@@ -11,15 +11,8 @@ svg {
     height: 100%;
 }
 
-svg.highlighting g.column {
-    stroke-opacity: 0.01;
-}
-
-svg.highlighting g.links {
-    stroke-opacity: 0.02;
-}
-
-svg.highlighting g.column g foreignObject {
+svg.highlighting .link,
+svg.highlighting .cell {
     opacity: 0.02;
 }
 

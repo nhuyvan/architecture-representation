@@ -1,4 +1,4 @@
-import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host } from '@angular/core';
+import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host, ViewEncapsulation } from '@angular/core';
 import { zeros, Matrix, multiply, ones, subtract, matrix, transpose, divide, hypot, dot } from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
@@ -22,7 +22,8 @@ import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.compo
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'frame'
-  }
+  },
+  encapsulation: ViewEncapsulation.None
 })
 export class GraphComponent implements AfterViewInit, OnInit {
 

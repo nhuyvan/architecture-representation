@@ -1,6 +1,6 @@
-import { Component, OnInit, ViewChild, ElementRef, Input, AfterViewInit, HostListener, NgZone } from '@angular/core';
+import { Component, ViewChild, ElementRef, Input, AfterViewInit, HostListener, NgZone } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { take, throttleTime } from 'rxjs/operators';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'mapper-color-picker',
@@ -25,7 +25,7 @@ export class ColorPickerComponent implements AfterViewInit {
   private _close = new Subject<void>();
 
   constructor(private _ngZone: NgZone) {
-    this._inputBroadcaster.pipe(throttleTime(1000));
+    this._inputBroadcaster.pipe(debounceTime(1000));
   }
 
   ngAfterViewInit() {
