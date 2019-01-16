@@ -1,1 +1,0 @@
-ng update @angular/{animations,common,compiler,core,forms,http,platform-browse,platform-browser-dynamic,router,core-js,rxjs,zone.js,cdk,material}
