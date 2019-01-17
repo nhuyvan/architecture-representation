@@ -237,7 +237,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _exportGraphAsPng() {
     const graph = this._canvasContainer.cloneNode(true) as SVGElement;
     document.body.appendChild(graph);
-    graph.querySelectorAll('.icon-container')
+    graph.querySelectorAll('.column-header__add-cell')
       .forEach(addButton => addButton.parentElement.removeChild(addButton));
     graph.querySelectorAll('*[data-selected]')
       .forEach(selected => selected.removeAttribute('data-selected'));

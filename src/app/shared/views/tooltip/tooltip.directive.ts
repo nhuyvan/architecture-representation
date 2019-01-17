@@ -20,8 +20,8 @@ export class TooltipDirective {
     }
   }
 
-  @HostListener('mouseout')
-  onMouseOut() {
+  @HostListener('mouseout', ['$event'])
+  onMouseOut(event: MouseEvent) {
     event.stopPropagation();
     this._tooltipService.hide();
   }
