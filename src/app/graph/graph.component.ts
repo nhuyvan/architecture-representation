@@ -177,15 +177,9 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _showMatrices() {
     const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
     const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
-    if (!this._Dp)
-      this._Dp = matrix(ones(this.columns.property.length, this.columns.element.length));
-    else
-      this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 1);
-    if (!this._Dq)
-      // Dq has size of RL
-      this._Dq = matrix(zeros(this.columns.quality.length, this.columns.element.length));
-    else
-      this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
+    this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
+    // Dq has size of RL
+    this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
     this.linkTable.forEach(links => {
       for (const link of links) {
         switch (link.source.column) {
@@ -216,6 +210,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
     // A(q , r) = < q , r > /[ ||q|| ||r|| ]
     const angle = Math.acos(dot(q, r.clone().resize(q.size(), 0)) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
 
+
+    // S(q , r) = < q , r > / Transpose(e)e
+    const strength = divide(dot(q, r.clone().resize(q.size(), 0)), multiply(transpose(e), e)) as number;
+
     this._matDialog.open(MatricesComponent, {
       data: {
         matrices: [
@@ -226,7 +224,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
           { name: 'T', entries: T.toArray() },
           { name: 'r', entries: r.toArray() }
         ],
-        angle: angle.toFixed(2)
+        angle: angle.toFixed(2),
+        strength: strength.toFixed(2),
       }
     });
   }
