@@ -45,6 +45,10 @@ h1 {
         border: 1px solid #ccc;
         padding: 5px;
     }
+    input[disabled] {
+        background-color: #d3d3d3;
+        opacity: 0.5;
+    }
     tbody::before {
         left: calc(100% - 10px);
         top: 0;

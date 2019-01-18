@@ -7,7 +7,8 @@
             <tr *ngFor='let row of entries;let rowIndex=index'>
                 <td *ngFor='let entry of row;let columnIndex=index'>
                     <input (change)='updateEntry(rowIndex, columnIndex, $event.target)'
-                           [value]='entry' />
+                           [disabled]='entry === -1'
+                           [value]='entry === -1 ? 0 : entry' />
                 </td>
             </tr>
         </tbody>

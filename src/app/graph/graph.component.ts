@@ -49,8 +49,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _canvasContainer: SVGSVGElement;
   private _canvasContainerRect: ClientRect;
   private _canvasInitialHeight = 0;
-  private _Dp: Matrix;
-  private _Dq: Matrix;
+  private _Dp = matrix(zeros(1, 1));
+  private _Dq = matrix(zeros(1, 1));
 
   constructor(
     private _changeDetector: ChangeDetectorRef,
@@ -105,21 +105,24 @@ export class GraphComponent implements AfterViewInit, OnInit {
             this._exportGraphAsPng();
             break;
           case Command.EDIT_Dp_DETRACTOR_MATRIX:
-            if (this._Dp)
-              this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 1);
-            else
-              this._Dp = matrix(ones(this.columns.property.length, this.columns.element.length));
+            this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
             this.linkTable.forEach(links => {
               for (const link of links)
                 if (link.source.column === 'element')
-                  this._Dp.set([link.target.id, link.source.id], 0);
+                  this._Dp.set([link.target.id, link.source.id], -1);
             });
             this._showMatrixEditor('Dp', this._Dp)
-              .subscribe(matrix => this._Dp = matrix);
+              .subscribe(resultingMatrix => {
+                this._Dp = resultingMatrix;
+                this._Dp.forEach((entry, index: any, matrix) => {
+                  if (entry === -1)
+                    matrix.set(index, 0);
+                });
+              });
             break;
           case Command.EDIT_Dq_DETRACTOR_MATRIX:
             if (this._Dq)
-              this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.property.length]);
+              this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.property.length], 0);
             else
               this._Dq = matrix(zeros(this.columns.quality.length, this.columns.element.length));
 
@@ -326,6 +329,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
         });
       }
       else if (this.selectedLink) {
+        this._enableEntryRepresentingLinkInMatrixDp(this.selectedLink);
         this._deleteLink(this.selectedLink);
         this._notifyChanges(null);
       }
@@ -338,8 +342,11 @@ export class GraphComponent implements AfterViewInit, OnInit {
       this.linkTable.delete(cellToDelete);
       this.linkTable.forEach(links => {
         for (const link of links)
-          if (link.target === cellToDelete)
+          if (link.target === cellToDelete) {
             this._deleteLink(link);
+            if (link.source.column === 'element')
+              this._enableEntryRepresentingLinkInMatrixDp(link);
+          }
       });
     }
     this._adjustCellIds(new Set<ColumnId>(this.selectedCells.map(cell => cell.column)));
@@ -372,6 +379,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
     else
       this.linkTable.set(link.source, updatedLinks);
     this.selectedLink = null;
+  }
+
+  private _enableEntryRepresentingLinkInMatrixDp(deletedLink: Link) {
+    this._Dp.set([deletedLink.target.id, deletedLink.source.id], 0);
   }
 
   private _notifyChanges(column: ColumnId) {
