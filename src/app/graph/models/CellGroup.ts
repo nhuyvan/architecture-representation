@@ -1,8 +1,10 @@
 import { Cell } from './Cell';
+import { GroupGraphModel } from './GraphModel';
 
 export class CellGroup {
   public readonly cells: Cell[] = [];
   constructor(
+    public id: number,
     readonly useDefaultSpacing: boolean,
     public left: number,
     public top: number,
@@ -49,11 +51,23 @@ export class CellGroup {
   }
 
   clone(): CellGroup {
-    const clone = new CellGroup(this.useDefaultSpacing, this.left, this.top, this.width, this.height);
+    const clone = new CellGroup(this.id, this.useDefaultSpacing, this.left, this.top, this.width, this.height);
     for (const cell of this.cells) {
       cell.cellGroup = clone;
       clone.cells.push(cell);
     }
     return clone;
+  }
+
+  constructGroupGraphModel(): GroupGraphModel {
+    return {
+      id: this.id,
+      cells: this.cells.map(cell => ({ id: cell.id, column: cell.column })),
+      useDefaultSpacing: this.useDefaultSpacing,
+      left: this.left,
+      top: this.top,
+      width: this.width,
+      height: this.height
+    }
   }
 }

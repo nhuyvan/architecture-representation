@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef, Input, OnChanges, ViewEncapsulation, Output, EventEmitter, AfterViewInit, SimpleChanges } from '@angular/core';
 
-import { TooltipService } from '@shared/views/tooltip/tooltip.service';
+import { TooltipService } from '@shared/tooltip';
 import { createSvgElement } from '../../utils';
 import { Link } from '../../models/Link';
 import { Column } from '../../models/Column';

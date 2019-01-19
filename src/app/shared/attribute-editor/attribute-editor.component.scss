@@ -1,0 +1,13 @@
+:host {
+    max-height: 90vh;
+    display: block;
+}
+
+.attribute__value {
+    margin-left: 10px;
+}
+
+.attribute__delete {
+    left: 10px;
+    transform: scale(0.7, 0.7);
+}

@@ -1,16 +1,20 @@
-import { Directive, Input, HostListener } from '@angular/core';
+import { Directive, Input, HostListener, OnDestroy } from '@angular/core';
 
 import { TooltipService } from './tooltip.service';
 
 @Directive({
   selector: '[tooltip]'
 })
-export class TooltipDirective {
+export class TooltipDirective implements OnDestroy {
 
   @Input('tooltip') content: string;
   @Input() position: 'top' | 'right' | 'bottom' | 'left' = 'bottom';
 
   constructor(private _tooltipService: TooltipService) { }
+
+  ngOnDestroy() {
+    this._tooltipService.hide();
+  }
 
   @HostListener('mouseover', ['$event'])
   onMouseOver(event: MouseEvent) {

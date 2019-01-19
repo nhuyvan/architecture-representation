@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { Command, CommandService } from '@shared/services/command.service';
+import { Command, CommandService } from '@shared/command/';
 
 
 @Component({
@@ -72,5 +72,13 @@ export class CommandsComponent implements OnInit {
 
   editDqDetractorMatrix() {
     this._commandService.select(Command.EDIT_Dq_DETRACTOR_MATRIX);
+  }
+
+  saveGraphModel() {
+    this._commandService.select(Command.SAVE_GRAPH_MODEL);
+  }
+
+  importGraphModel() {
+    this._commandService.select(Command.IMPORT_GRAPH_MODEL);
   }
 }

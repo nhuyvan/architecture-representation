@@ -1,15 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 
-export enum Command {
-  ACTIVATE_SHOW_ASSOCIATIONS, TOGGLE_SHOW_ASSOCIATIONS,
-  GROUP_CELLS, UNGROUP_CELLS, ACTIVATE_CELL_GROUPING, ACTIVATE_CELL_UNGROUPING,
-  SHOW_MATRICES,
-  TURN_CELL_ON, TURN_CELL_OFF, ACTIVATE_TURN_OFF_CELL, ACTIVATE_TURN_ON_CELL,
-  EXPORT_GRAPH_AS_PNG,
-  EDIT_Dp_DETRACTOR_MATRIX,
-  EDIT_Dq_DETRACTOR_MATRIX
-}
+import { Command } from './Command';
 
 @Injectable({
   providedIn: 'root'

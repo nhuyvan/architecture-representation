@@ -3,6 +3,7 @@ import { zeros, Matrix, multiply, ones, subtract, matrix, transpose, divide, hyp
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';
+import { DatePipe } from '@angular/common';
 
 import { MatricesComponent } from './views/matrices/matrices.component';
 import { Link } from './models/Link';
@@ -12,8 +13,10 @@ import { ColumnLayoutChange, ColumnLayoutChangeType } from './models/ColumnLayou
 import { CellSelectionEvent, CellSelectionEventType } from './models/CellSelectionEvent';
 import { ColumnLayoutChangeService } from './services/column-layout-change.service';
 import { CellGroup } from './models/CellGroup';
-import { CommandService, Command } from '@shared/services/command.service';
+import { CommandService, Command } from '@shared/command';
 import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.component';
+import { GraphModel, CellGraphModel, LinkGraphModel } from './models/GraphModel';
+import { AttributeEditorService } from '@shared/attribute-editor';
 
 @Component({
   selector: 'mapper-graph',
@@ -39,10 +42,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
     quality: []
   };
   readonly cellGroups = {
-    element: [new CellGroup(false, 0, 0, 0, 0)],
-    property: [new CellGroup(false, 0, 0, 0, 0)],
-    quality: [new CellGroup(false, 0, 0, 0, 0)]
-  }
+    element: [new CellGroup(0, false, 0, 0, 0, 0)],
+    property: [new CellGroup(0, false, 0, 0, 0, 0)],
+    quality: [new CellGroup(0, false, 0, 0, 0, 0)]
+  };
   selectedCells: Cell[] = [];
   showAssociations = false;
 
@@ -51,13 +54,15 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _canvasInitialHeight = 0;
   private _Dp = matrix(zeros(1, 1));
   private _Dq = matrix(zeros(1, 1));
+  private _graphModel: GraphModel = null;
 
   constructor(
     private _changeDetector: ChangeDetectorRef,
     private _columnLayoutChange: ColumnLayoutChangeService,
     private _commandService: CommandService,
     @Host() private readonly _hostElement: ElementRef<HTMLElement>,
-    private _matDialog: MatDialog
+    private _matDialog: MatDialog,
+    private _attributeEditorService: AttributeEditorService
   ) {
   }
 
@@ -105,29 +110,13 @@ export class GraphComponent implements AfterViewInit, OnInit {
             this._exportGraphAsPng();
             break;
           case Command.EDIT_Dp_DETRACTOR_MATRIX:
-            this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
-            this.linkTable.forEach(links => {
-              for (const link of links)
-                if (link.source.column === 'element')
-                  this._Dp.set([link.target.id, link.source.id], -1);
-            });
-            this._showMatrixEditor('Dp', this._Dp)
-              .subscribe(resultingMatrix => {
-                this._Dp = resultingMatrix;
-                this._Dp.forEach((entry, index: any, matrix) => {
-                  if (entry === -1)
-                    matrix.set(index, 0);
-                });
-              });
+            this._editDpMatrix();
             break;
           case Command.EDIT_Dq_DETRACTOR_MATRIX:
-            if (this._Dq)
-              this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.property.length], 0);
-            else
-              this._Dq = matrix(zeros(this.columns.quality.length, this.columns.element.length));
-
-            this._showMatrixEditor('Dq', this._Dq)
-              .subscribe(matrix => this._Dq = matrix);
+            this._editDqMatrix();
+            break;
+          case Command.SAVE_GRAPH_MODEL:
+            this._saveGraphModel();
             break;
         }
       });
@@ -141,7 +130,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _groupSelectedCells() {
     const cellsToGroup = this.selectedCells.filter(cell => cell.column === 'element');
     if (cellsToGroup.length > 0) {
-      const newGroup = new CellGroup(true, 0, 0, this.columnWidth, 0);
+      const newGroup = new CellGroup(this.cellGroups.element.length, true, 0, 0, this.columnWidth, 0);
       for (const elementCell of cellsToGroup) {
         elementCell.cellGroup.removeCell(elementCell);
         this._removeNonDefaultCellGroupIfEmpty(elementCell.cellGroup);
@@ -171,63 +160,70 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
   private _removeNonDefaultCellGroupIfEmpty(cellGroup: CellGroup) {
     if (this.cellGroups.element.length > 1 && cellGroup.size() === 0)
-      this.cellGroups.element = this.cellGroups.element.filter(group => group !== cellGroup);
+      this.cellGroups.element = this.cellGroups.element.filter(group => group !== cellGroup)
+        .map((group, index) => {
+          group.id = index;
+          return group;
+        });
   }
 
   private _showMatrices() {
-    const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
-    const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
-    this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
-    // Dq has size of RL
-    this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
-    this.linkTable.forEach(links => {
-      for (const link of links) {
-        switch (link.source.column) {
-          case 'element':
-            L.set([link.target.id, link.source.id], 1);
-            this._Dp.set([link.target.id, link.source.id], 0);
-            break;
-          case 'property':
-            R.set([link.target.id, link.source.id], 1);
-            this._Dq.set([link.target.id, link.source.id], 0);
-            break;
+    try {
+      const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
+      const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
+      this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
+      // Dq has size of RL
+      this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
+      this.linkTable.forEach(links => {
+        for (const link of links) {
+          switch (link.source.column) {
+            case 'element':
+              L.set([link.target.id, link.source.id], 1);
+              this._Dp.set([link.target.id, link.source.id], 0);
+              break;
+            case 'property':
+              R.set([link.target.id, link.source.id], 1);
+              this._Dq.set([link.target.id, link.source.id], 0);
+              break;
+          }
         }
-      }
-    });
-    const e = matrix(this.columns.element.map(cell => cell.isOn ? 1 : 0));
-    // q = [ R (L – Dp) – Dq ] e
-    const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
+      });
+      const e = matrix(this.columns.element.map(cell => cell.isOn ? 1 : 0));
+      // q = [ R (L – Dp) – Dq ] e
+      const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
 
-    // T = R (L - Dp) – Dq
-    const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
+      // r = transpose(w)q0 / || Transpose(w)q0 ||
+      const q0 = matrix(ones(this.columns.quality.length, 1));
+      const w = matrix(this.columns.quality.map(cell => cell.weight));
+      const wTransposeTimesQ0 = multiply(transpose(w), q0) as Matrix;
+      const r = divide(wTransposeTimesQ0, hypot(wTransposeTimesQ0 as any)) as Matrix;
 
-    // r = transpose(w)q0 / || Transpose(w)q0 ||
-    const q0 = matrix(ones(this.columns.quality.length, 1));
-    const w = matrix(this.columns.quality.map(cell => cell.weight));
-    const wTransposeTimesQ0 = multiply(transpose(w), q0) as Matrix;
-    const r = divide(wTransposeTimesQ0, hypot(wTransposeTimesQ0 as any)) as Matrix;
+      // A(q , r) = < q , r > /[ ||q|| ||r|| ]
+      const angle = Math.acos(dot(q, r.clone().resize(q.size(), 0)) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
 
-    // A(q , r) = < q , r > /[ ||q|| ||r|| ]
-    const angle = Math.acos(dot(q, r.clone().resize(q.size(), 0)) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
+      // S(q , r) = < q , r > / Transpose(e)e
+      const strength = divide(dot(q, r.clone().resize(q.size(), 0)), multiply(transpose(e), e)) as number;
+      // T = R (L - Dp) – Dq
+      const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
 
-
-    // S(q , r) = < q , r > / Transpose(e)e
-    const strength = divide(dot(q, r.clone().resize(q.size(), 0)), multiply(transpose(e), e)) as number;
-
-    this._matDialog.open(MatricesComponent, {
-      data: {
-        matrices: [
-          { name: 'L', entries: L.toArray() },
-          { name: 'Dp', entries: this._Dp.toArray() },
-          { name: 'R', entries: R.toArray() },
-          { name: 'Dq', entries: this._Dq.toArray() },
-          { name: 'T', entries: T.toArray() },
-          { name: 'r', entries: r.toArray() }
-        ],
-        angle: angle.toFixed(2),
-        strength: strength.toFixed(2),
-      }
-    });
+      this._matDialog.open(MatricesComponent, {
+        data: {
+          matrices: [
+            { name: 'L', entries: L.toArray() },
+            { name: 'Dp', entries: this._Dp.toArray() },
+            { name: 'R', entries: R.toArray() },
+            { name: 'Dq', entries: this._Dq.toArray() },
+            { name: 'T', entries: T.toArray() },
+            { name: 'r', entries: r.toArray() }
+          ],
+          angle: angle.toFixed(2),
+          strength: strength.toFixed(2),
+        }
+      });
+    }
+    catch (e) {
+      console.error(e);
+    }
   }
 
   private _turnCellsOnOrOff(onOrOff: boolean) {
@@ -249,15 +245,138 @@ export class GraphComponent implements AfterViewInit, OnInit {
     });
   }
 
+  private _editDpMatrix() {
+    this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
+    this.linkTable.forEach(links => {
+      for (const link of links)
+        if (link.source.column === 'element')
+          this._Dp.set([link.target.id, link.source.id], -1);
+    });
+    this._showMatrixEditor('Dp', this._Dp)
+      .subscribe(resultingMatrix => {
+        this._Dp = resultingMatrix;
+        this._Dp.forEach((entry, index: any, matrix) => {
+          if (entry === -1)
+            matrix.set(index, 0);
+        });
+      });
+  }
+
+  private _editDqMatrix() {
+    this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
+    this._showMatrixEditor('Dq', this._Dq)
+      .subscribe(matrix => this._Dq = matrix);
+  }
+
   private _showMatrixEditor(matrixName: string, matrix: Matrix): Observable<Matrix> {
-    this.selectedCells = [];
-    this.selectedLink = null;
+    this._unselectAllSelectedComponents();
     this._changeDetector.detectChanges();
     return this._matDialog.open(MatrixEditorComponent, {
       data: { matrixName, matrix },
       disableClose: true,
       autoFocus: false
     }).afterClosed();
+  }
+
+  private _unselectAllSelectedComponents() {
+    this.selectedCells = [];
+    this.selectedLink = null;
+  }
+
+  private _saveGraphModel() {
+    this._unselectAllSelectedComponents();
+    const initialAttributes = [];
+    if (!this._graphModel)
+      initialAttributes.push(
+        { name: 'Graph name', value: '' },
+        { name: 'Author', value: '' },
+        { name: 'Version', value: '1.0' },
+        { name: 'Date created', value: new DatePipe('en-US').transform(new Date(), 'MM/dd/yyyy, HH:mm:ss zzzz') }
+      );
+    else
+      initialAttributes.push(
+        ...Object.entries(this._graphModel.attributes)
+          .map(([attrName, attrValue]) => ({ name: attrName, value: attrValue }))
+          .sort((a, b) => {
+            if (a.name === 'Graph name')
+              return -1;
+            if (b.name === 'Graph name')
+              return 1;
+            if (a.name === 'Author')
+              return -1;
+            if (b.name === 'Author')
+              return 1;
+            if (a.name === 'Version')
+              return -1;
+            if (b.name === 'Version')
+              return 1;
+            if (a.name === 'Date created')
+              return -1;
+            if (b.name === 'Date created')
+              return 1;
+            return -1;
+          })
+      );
+    this._attributeEditorService.open(initialAttributes)
+      .subscribe(attributes => {
+        if (attributes.length > 0) {
+          this._graphModel = {
+            attributes: attributes.reduce((container, attr) => {
+              container[attr.name] = attr.value;
+              return container;
+            }, {}),
+
+            columns: Object.entries(this.columns)
+              .reduce((container, [columnName, cells]) => {
+                container[columnName] = cells.map(this._constructCellGraphModel);
+                return container;
+              }, { element: null, property: null, quality: null }),
+
+            groups: Object.entries(this.cellGroups)
+              .reduce((container, [columnName, groups]) => {
+                container[columnName] = groups.map(group => group.constructGroupGraphModel());
+                return container;
+              }, { element: null, property: null, quality: null }),
+
+            links: Array.from(this.linkTable.entries())
+              .reduce((container, [source, links]) => {
+                container[source.idSelector] = links.map(this._constructLinkGraphModel);
+                return container;
+              }, {})
+          };
+          const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          download(`${this._graphModel.attributes['Graph name']}.json` || 'graph-model.json', url);
+          URL.revokeObjectURL(url);
+        }
+      });
+  }
+
+  private _constructCellGraphModel(cell: Cell): CellGraphModel {
+    return {
+      id: cell.id,
+      top: cell.top,
+      left: cell.left,
+      width: cell.width,
+      height: cell.height,
+      text: cell.text,
+      column: cell.column,
+      idSelector: cell.idSelector,
+      cellGroup: cell.cellGroup.id,
+      isOn: cell.isOn,
+      weight: cell.weight
+    };
+  }
+
+  private _constructLinkGraphModel(link: Link): LinkGraphModel {
+    return {
+      sourceColumn: link.source.column,
+      targetColumn: link.target.column,
+      source: link.source.id,
+      target: link.target.id,
+      idSelector: link.idSelector,
+      weight: link.weight
+    }
   }
 
   private _onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {

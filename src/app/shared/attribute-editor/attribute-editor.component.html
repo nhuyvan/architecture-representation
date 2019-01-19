@@ -1,0 +1,48 @@
+<form mat-dialog-container
+      class='attribute-editor'
+      [formGroup]='form'>
+    <div formArrayName='attributes'>
+        <div *ngFor='let attribute of attributes.controls;let index=index'
+             formGroupName='{{index}}'
+             class='attribute'>
+            <mat-form-field class='attribute__name'>
+                <input matInput
+                       formControlName='name'
+                       placeholder='Attribute name'>
+            </mat-form-field>
+            <mat-form-field class='attribute__value'>
+                <input matInput
+                       formControlName='value'
+                       placeholder='Attribute value'>
+            </mat-form-field>
+            <button mat-mini-fab
+                    color='accent'
+                    class='attribute__delete'
+                    tooltip='Remove attribute'
+                    (click)='removeAttribute(index)'>
+                <mat-icon>delete</mat-icon>
+            </button>
+
+        </div>
+    </div>
+</form>
+
+<mat-dialog-actions>
+    <button mat-button
+            [mat-dialog-close]='[]'>
+        Close
+    </button>
+    <button mat-raised-button
+            color='primary'
+            [disabled]='form.invalid'
+            [mat-dialog-close]='form.value.attributes'>
+        Save
+    </button>
+    <button mat-mini-fab
+            style='margin-left: auto;margin-bottom: 10px;'
+            color='accent'
+            tooltip='Add attribute'
+            (click)='addNewAttribute()'>
+        <mat-icon>add</mat-icon>
+    </button>
+</mat-dialog-actions>

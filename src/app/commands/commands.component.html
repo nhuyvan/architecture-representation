@@ -37,14 +37,6 @@
 </button>
 
 <button mat-mini-fab
-        color='basic'
-        tooltip='Export graph as PNG'
-        position='right'
-        (click)='exportGraphAsPng()'>
-    <mat-icon>arrow_downward</mat-icon>
-</button>
-
-<button mat-mini-fab
         class='edit-matrix'
         color='basic'
         tooltip='Edit Dp matrix'
@@ -60,4 +52,28 @@
         position='right'
         (click)='editDqDetractorMatrix()'>
     <mat-icon>Dq</mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
+        tooltip='Import graph model'
+        position='right'
+        (click)='importGraphModel()'>
+    <mat-icon>arrow_upward</mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
+        tooltip='Export graph as PNG'
+        position='right'
+        (click)='exportGraphAsPng()'>
+    <mat-icon>image</mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
+        tooltip='Save graph model'
+        position='right'
+        (click)='saveGraphModel()'>
+    <mat-icon>save</mat-icon>
 </button>
