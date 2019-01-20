@@ -1,0 +1,6 @@
+<input type='file'
+       class='file-picker'
+       accept='.json, application/json'
+       tabindex='1'
+       (change)='onFileSelected($event.target.files[0])'
+       (blur)='onFileSelected()' />

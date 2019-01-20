@@ -10,10 +10,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { TooltipComponent } from './tooltip/tooltip.component';
 import { TooltipDirective } from './tooltip/tooltip.directive';
 import { AttributeEditorComponent } from './attribute-editor/attribute-editor.component';
+import { FilePickerComponent } from './file-picker/file-picker.component';
 
 @NgModule({
-  declarations: [TooltipComponent, TooltipDirective, AttributeEditorComponent],
-  exports: [MatButtonModule, TooltipDirective, MatDialogModule, MatIconModule],
+  declarations: [TooltipComponent, TooltipDirective, AttributeEditorComponent, FilePickerComponent],
+  exports: [MatButtonModule, TooltipDirective, MatDialogModule, MatIconModule, FilePickerComponent],
   imports: [
     CommonModule, MatButtonModule, MatDialogModule, MatIconModule, ReactiveFormsModule, MatInputModule,
     MatFormFieldModule

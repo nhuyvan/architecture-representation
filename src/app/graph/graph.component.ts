@@ -17,6 +17,7 @@ import { CommandService, Command } from '@shared/command';
 import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.component';
 import { GraphModel, CellGraphModel, LinkGraphModel } from './models/GraphModel';
 import { AttributeEditorService } from '@shared/attribute-editor';
+import { FilePickerService } from '@shared/file-picker';
 
 @Component({
   selector: 'mapper-graph',
@@ -62,7 +63,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
     private _commandService: CommandService,
     @Host() private readonly _hostElement: ElementRef<HTMLElement>,
     private _matDialog: MatDialog,
-    private _attributeEditorService: AttributeEditorService
+    private _attributeEditorService: AttributeEditorService,
+    private _filePicker: FilePickerService
   ) {
   }
 
@@ -117,6 +119,13 @@ export class GraphComponent implements AfterViewInit, OnInit {
             break;
           case Command.SAVE_GRAPH_MODEL:
             this._saveGraphModel();
+            break;
+          case Command.IMPORT_GRAPH_MODEL:
+            this._filePicker.open()
+              .subscribe(file => {
+                if (file)
+                  this._importGraphModel(file);
+              });
             break;
         }
       });
@@ -340,9 +349,9 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
             links: Array.from(this.linkTable.entries())
               .reduce((container, [source, links]) => {
-                container[source.idSelector] = links.map(this._constructLinkGraphModel);
+                container.push(this._constructLinkGraphModel(source, links));
                 return container;
-              }, {})
+              }, [])
           };
           const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
@@ -368,15 +377,75 @@ export class GraphComponent implements AfterViewInit, OnInit {
     };
   }
 
-  private _constructLinkGraphModel(link: Link): LinkGraphModel {
+  private _constructLinkGraphModel(source: Cell, links: Link[]): LinkGraphModel {
     return {
-      sourceColumn: link.source.column,
-      targetColumn: link.target.column,
-      source: link.source.id,
-      target: link.target.id,
-      idSelector: link.idSelector,
-      weight: link.weight
+      sourceColumn: source.column,
+      sourceId: source.id,
+      targets: links.map(link => {
+        return {
+          targetColumn: link.target.column,
+          targetId: link.target.id,
+          idSelector: link.idSelector,
+          weight: link.weight
+        };
+      })
+    };
+  }
+
+  private _importGraphModel(modelFile: File) {
+    const fileReader = new FileReader();
+    fileReader.onload = event => {
+      try {
+        const model: GraphModel = JSON.parse((event.target as FileReader).result as string);
+        this._constructCellGroupsFromGraphModel(model);
+        this._constructColumnsFromGraphModel(model);
+        this._constructLinkTableFromGraphModel(model);
+        this._notifyChanges();
+      }
+      catch (e) {
+        console.error(e);
+      }
+      finally {
+        (event.target as FileReader).onload = null;
+      }
+    };
+    fileReader.readAsText(modelFile);
+  }
+
+  private _constructCellGroupsFromGraphModel(graphModel: GraphModel) {
+    for (const [columnName, groups] of Object.entries(graphModel.groups)) {
+      this.cellGroups[columnName] = groups.map(groupGraphModel => {
+        const newCellGroup = new CellGroup(
+          groupGraphModel.id,
+          groupGraphModel.useDefaultSpacing,
+          groupGraphModel.left,
+          groupGraphModel.top,
+          groupGraphModel.width,
+          groupGraphModel.height
+        );
+        for (const cellGraphModel of groupGraphModel.cells) {
+          const cell = graphModel.columns[cellGraphModel.column][cellGraphModel.id] as Cell;
+          newCellGroup.addCell(cell);
+        }
+        return newCellGroup;
+      });
     }
+  }
+
+  private _constructLinkTableFromGraphModel(graphModel: GraphModel) {
+    this.linkTable.clear();
+    for (const linkGraphModel of graphModel.links) {
+      const source = graphModel.columns[linkGraphModel.sourceColumn][linkGraphModel.sourceId];
+      for (const target of linkGraphModel.targets) {
+        const targetCell = graphModel.columns[target.targetColumn][target.targetId];
+        this._addNewLink(source as any, targetCell as any, target.weight);
+      }
+    }
+  }
+
+  private _constructColumnsFromGraphModel(graphModel: GraphModel) {
+    for (const columnName in graphModel.columns)
+      this.columns[columnName] = graphModel.columns[columnName];
   }
 
   private _onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {
@@ -503,7 +572,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this._Dp.set([deletedLink.target.id, deletedLink.source.id], 0);
   }
 
-  private _notifyChanges(column: ColumnId) {
+  private _notifyChanges(column?: ColumnId) {
     this.linkTable = new Map<Cell, Link[]>(this.linkTable);
     if (column)
       this.cellGroups[column] = this.cellGroups[column].map(group => group.clone());
@@ -624,12 +693,12 @@ export class GraphComponent implements AfterViewInit, OnInit {
     }
   }
 
-  private _addNewLink(source: Cell, target: Cell) {
+  private _addNewLink(source: Cell, target: Cell, weight?: number) {
     const newLink = {
       source,
       target,
       idSelector: source.idSelector + '_' + target.idSelector,
-      weight: 1.0,
+      weight: weight || 1.0,
       domInstance: null
     };
 
