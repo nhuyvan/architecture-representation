@@ -1,2 +1,2 @@
-export * from './attribute-editor.service';
+export * from './attribute-editor.component';
 export * from './Attribute';

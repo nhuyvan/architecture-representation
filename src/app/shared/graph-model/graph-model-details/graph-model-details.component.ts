@@ -23,7 +23,7 @@ export class GraphModelDetailsComponent implements OnChanges {
   constructor() { }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ('graphModel' in changes && !changes.graphModel.firstChange)
+    if ('graphModel' in changes && this.graphModel)
       this.details = [
         { name: 'Graph name', value: this.graphModel.attributes['Graph name'] },
         { name: 'A<q, r>', value: this.graphModel.angle },

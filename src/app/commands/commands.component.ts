@@ -74,6 +74,10 @@ export class CommandsComponent implements OnInit {
     this._commandService.select(CommandAction.EDIT_Dq_DETRACTOR_MATRIX);
   }
 
+  compareGraphModels() {
+    this._commandService.select(CommandAction.COMPARE_GRAPH_MODELS);
+  }
+
   saveGraphModel() {
     this._commandService.select(CommandAction.SAVE_GRAPH_MODEL);
   }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { Subject, Observable, fromEvent, of } from 'rxjs';
+import { take, map, switchMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -16,10 +16,29 @@ export class FilePickerService {
     this._fileSelection.next(file);
   }
 
-  open(): Observable<File> {
+  open(): FilePickerService {
     const filePicker = document.querySelector('input.file-picker') as HTMLInputElement;
     filePicker.click();
+    return this;
+  }
+
+  readFileAsJson<T>(): Observable<T> {
     return this._fileSelection.asObservable()
-      .pipe(take(1));
+      .pipe(
+        take(1),
+        switchMap(file => {
+          if (file) {
+            const fileReader = new FileReader();
+            const fileReaderResultObservable = fromEvent(fileReader, 'load')
+              .pipe(
+                take(1),
+                map(() => JSON.parse(fileReader.result as string) as T)
+              );
+            fileReader.readAsText(file);
+            return fileReaderResultObservable;
+          }
+          return of(null);
+        })
+      );
   }
 }

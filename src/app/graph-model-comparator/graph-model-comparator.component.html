@@ -1,0 +1,17 @@
+<mat-dialog-content>
+    <div style='display: flex'>
+        <mapper-graph-model-details [graphModel]='input.leftModel'
+                                    [rowDisplay]='false'></mapper-graph-model-details>
+        <mapper-graph-model-details [graphModel]='input.rightModel'
+                                    [rowDisplay]='false'></mapper-graph-model-details>
+    </div>
+    <hr style='margin: 20px 0' />
+    <div style='text-align: center'>
+        <strong>A(q1, q2) = </strong> {{calculateAngleBetweenTwoModels()}}
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+    <button mat-button
+            mat-dialog-close>Close</button>
+</mat-dialog-actions>

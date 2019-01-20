@@ -56,6 +56,14 @@
 
 <button mat-mini-fab
         color='basic'
+        tooltip='Select another graph model to compare against'
+        position='right'
+        (click)='compareGraphModels()'>
+    <mat-icon>compare</mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
         tooltip='Import graph model'
         position='right'
         (click)='importGraphModel()'>

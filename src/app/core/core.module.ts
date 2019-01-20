@@ -5,6 +5,7 @@ import { SharedModule } from '@shared/shared.module';
 import { CoreComponent } from './core.component';
 import { GraphModule } from '../graph/graph.module';
 import { CommandsModule } from '../commands/commands.module';
+import { GraphModelComparatorModule } from '../graph-model-comparator/graph-model-comparator.module';
 
 @NgModule({
   declarations: [CoreComponent],
@@ -12,7 +13,8 @@ import { CommandsModule } from '../commands/commands.module';
     CommonModule,
     GraphModule,
     SharedModule,
-    CommandsModule
+    CommandsModule,
+    GraphModelComparatorModule
   ],
   exports: [CoreComponent]
 })

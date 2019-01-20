@@ -16,7 +16,7 @@ import { CellGroup } from './models/CellGroup';
 import { CommandService, CommandAction, Command } from '@shared/command';
 import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.component';
 import { GraphModel, CellGraphModel, LinkGraphModel } from '@shared/graph-model';
-import { AttributeEditorService, Attribute } from '@shared/attribute-editor';
+import { Attribute, AttributeEditorComponent } from '@shared/attribute-editor';
 import { FilePickerService } from '@shared/file-picker';
 
 @Component({
@@ -66,7 +66,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
     private _commandService: CommandService,
     @Host() private readonly _hostElement: ElementRef<HTMLElement>,
     private _matDialog: MatDialog,
-    private _attributeEditorService: AttributeEditorService,
     private _filePicker: FilePickerService
   ) {
   }
@@ -125,9 +124,11 @@ export class GraphComponent implements AfterViewInit, OnInit {
             break;
           case CommandAction.IMPORT_GRAPH_MODEL:
             this._filePicker.open()
-              .subscribe(file => {
-                if (file)
-                  this._importGraphModel(file);
+              .readFileAsJson<GraphModel>()
+              // .pipe(catchError(err => { console.log(err); return of(null); })) TODO: Show error dialog
+              .subscribe(model => {
+                if (model)
+                  this._importGraphModel(model);
               });
             break;
         }
@@ -190,7 +191,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
           { name: 'Dq', entries: matrices.Dq.toArray() },
           { name: 'T', entries: matrices.T.toArray() },
           { name: 'r', entries: matrices.r.toArray() }
-        ]
+        ],
+        autoFocus: false
       });
   }
 
@@ -229,7 +231,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
       return { L, Dp: this._Dp, R, Dq: this._Dq, T, r, e, q };
     }
     catch (e) {
-      console.error(e);
+      console.warn(e.message);
       return null;
     }
   }
@@ -327,7 +329,11 @@ export class GraphComponent implements AfterViewInit, OnInit {
             return -1;
           })
       );
-    this._attributeEditorService.open(initialAttributes)
+    this._matDialog.open(AttributeEditorComponent, {
+      data: initialAttributes,
+      autoFocus: false
+    })
+      .afterClosed()
       .subscribe(attributes => {
         if (attributes.length > 0) {
           this._graphModel = this._constructGraphModel(true, attributes);
@@ -341,45 +347,47 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
   private _constructGraphModel(forStorage = false, attributes?: Attribute[]): GraphModel {
     const matrices = this._computeMatrices();
-    return {
-      ...Object.assign(
-        forStorage
-          ?
-          {
-            attributes: attributes.reduce((container, attr) => {
-              container[attr.name] = attr.value;
-              return container;
-            }, {}),
-            columns: Object.entries(this.columns)
-              .reduce((container, [columnName, cells]) => {
-                container[columnName] = cells.map(this._constructCellGraphModel);
+    if (matrices)
+      return {
+        ...Object.assign(
+          forStorage
+            ?
+            {
+              attributes: attributes.reduce((container, attr) => {
+                container[attr.name] = attr.value;
                 return container;
-              }, { element: null, property: null, quality: null }),
+              }, {}),
+              columns: Object.entries(this.columns)
+                .reduce((container, [columnName, cells]) => {
+                  container[columnName] = cells.map(this._constructCellGraphModel);
+                  return container;
+                }, { element: null, property: null, quality: null }),
 
-            groups: Object.entries(this.cellGroups)
-              .reduce((container, [columnName, groups]) => {
-                container[columnName] = groups.map(group => group.constructGroupGraphModel());
-                return container;
-              }, { element: null, property: null, quality: null }),
+              groups: Object.entries(this.cellGroups)
+                .reduce((container, [columnName, groups]) => {
+                  container[columnName] = groups.map(group => group.constructGroupGraphModel());
+                  return container;
+                }, { element: null, property: null, quality: null }),
 
-            links: Array.from(this.linkTable.entries())
-              .reduce((container, [source, links]) => {
-                container.push(this._constructLinkGraphModel(source, links));
-                return container;
-              }, [])
-          }
-          :
-          {
-            attributes: this._graphModel.attributes,
-            columns: null,
-            groups: null,
-            links: null
-          }
-      ),
-      angle: this._computeAngle(matrices.q, matrices.r),
-      strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
-      q: matrices.q.toArray() as number[]
-    };
+              links: Array.from(this.linkTable.entries())
+                .reduce((container, [source, links]) => {
+                  container.push(this._constructLinkGraphModel(source, links));
+                  return container;
+                }, [])
+            }
+            :
+            {
+              attributes: this._graphModel.attributes,
+              columns: null,
+              groups: null,
+              links: null
+            }
+        ),
+        angle: this._computeAngle(matrices.q, matrices.r),
+        strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
+        q: matrices.q.toArray() as number[]
+      };
+    return null;
   }
 
   private _constructCellGraphModel(cell: Cell): CellGraphModel {
@@ -413,26 +421,13 @@ export class GraphComponent implements AfterViewInit, OnInit {
     };
   }
 
-  private _importGraphModel(modelFile: File) {
-    const fileReader = new FileReader();
-    fileReader.onload = event => {
-      try {
-        this._graphModel = JSON.parse((event.target as FileReader).result as string);
-        this._constructCellGroupsFromGraphModel(this._graphModel);
-        this._constructColumnsFromGraphModel(this._graphModel);
-        this._constructLinkTableFromGraphModel(this._graphModel);
-        this._notifyChanges();
-        this.modelChanged.emit(this._graphModel);
-      }
-      catch (e) {
-        // TODO: Show error dialog
-        console.error(e);
-      }
-      finally {
-        (event.target as FileReader).onload = null;
-      }
-    };
-    fileReader.readAsText(modelFile);
+  private _importGraphModel(graphModel: GraphModel) {
+    this._graphModel = graphModel;
+    this._constructCellGroupsFromGraphModel(graphModel);
+    this._constructColumnsFromGraphModel(graphModel);
+    this._constructLinkTableFromGraphModel(graphModel);
+    this._notifyChanges();
+    this.modelChanged.emit(graphModel);
   }
 
   private _constructCellGroupsFromGraphModel(graphModel: GraphModel) {

@@ -7,7 +7,8 @@ export enum CommandAction {
   EDIT_Dp_DETRACTOR_MATRIX,
   EDIT_Dq_DETRACTOR_MATRIX,
   IMPORT_GRAPH_MODEL,
-  SAVE_GRAPH_MODEL
+  SAVE_GRAPH_MODEL,
+  COMPARE_GRAPH_MODELS
 }
 
 export interface Command {
