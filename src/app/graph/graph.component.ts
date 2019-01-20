@@ -1,5 +1,5 @@
 import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host, ViewEncapsulation } from '@angular/core';
-import { zeros, Matrix, multiply, ones, subtract, matrix, transpose, divide, hypot, dot } from 'mathjs';
+import { zeros, Matrix, multiply, subtract, matrix, transpose, divide, hypot, dot, sum } from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';
@@ -201,17 +201,16 @@ export class GraphComponent implements AfterViewInit, OnInit {
       // q = [ R (L – Dp) – Dq ] e
       const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
 
-      // r = transpose(w)q0 / || Transpose(w)q0 ||
-      const q0 = matrix(ones(this.columns.quality.length, 1));
-      const w = matrix(this.columns.quality.map(cell => cell.weight));
-      const wTransposeTimesQ0 = multiply(transpose(w), q0) as Matrix;
-      const r = divide(wTransposeTimesQ0, hypot(wTransposeTimesQ0 as any)) as Matrix;
+      // r = w / |w|
+      const totalQualityWeight = sum(this.columns.quality.map(cell => cell.weight));
+      const w = matrix(this.columns.quality.map(cell => cell.weight / totalQualityWeight));
+      const r = divide(w, hypot(w as any)) as Matrix;
 
-      // A(q , r) = < q , r > /[ ||q|| ||r|| ]
-      const angle = Math.acos(dot(q, r.clone().resize(q.size(), 0)) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
+      // A(q , r) = < q , r > /[ |q| |r| ]
+      const angle = Math.acos(dot(q, r) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
 
       // S(q , r) = < q , r > / Transpose(e)e
-      const strength = divide(dot(q, r.clone().resize(q.size(), 0)), multiply(transpose(e), e)) as number;
+      const strength = divide(dot(q, r), multiply(transpose(e), e)) as number;
       // T = R (L - Dp) – Dq
       const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
 
@@ -295,7 +294,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _saveGraphModel() {
     this._unselectAllSelectedComponents();
     const initialAttributes = [];
-    if (!this._graphModel)
+    if (!this._graphModel || !this._graphModel.attributes['Graph name'])
       initialAttributes.push(
         { name: 'Graph name', value: '' },
         { name: 'Date created', value: new DatePipe('en-US').transform(new Date(), 'MM/dd/yyyy, HH:mm:ss zzzz') }
