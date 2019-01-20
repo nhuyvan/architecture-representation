@@ -1,8 +1,9 @@
 <div #input
-     class='text-editor__input'>
+     class='text-editor__input'
+     (keydown)='saveTextOnEscapeKeyPressed($event)'>
     <div style='width: 100%'
          contenteditable='true'
-         (blur)='onBlur()'
+         (blur)='onBlur($event)'
          (keydown)='moveIntoViewIfOverflowsOffscreen($event)'>
     </div>
 </div>

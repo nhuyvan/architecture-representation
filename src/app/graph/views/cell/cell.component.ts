@@ -1,4 +1,4 @@
-import { Component, Input, ElementRef, ViewChild, AfterViewInit, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ElementRef, ViewChild, AfterViewInit, ViewEncapsulation } from '@angular/core';
 
 import { Cell } from '../../models/Cell';
 import { TextEditorService } from '../text-editor/text-editor.service';
@@ -30,14 +30,13 @@ export class CellComponent implements AfterViewInit {
     (this._cellElementRef.nativeElement as any).__cell__ = this.cell;
   }
 
-  @HostListener('click', ['$event.target.parentElement.hasAttribute("data-cell")', '$event'])
   showEditorToAddWeightForQualityCell(isCell: boolean, event: MouseEvent) {
     if ((event.ctrlKey || event.metaKey) && isCell && this.cell.column === 'quality') {
       event.stopPropagation();
       this._textEditorService.show(this.cell, String(this.cell.weight))
         .textAdded((payload, cellBeingEdited) => {
           const weight = +payload.text;
-          if (weight >= 0 && weight <= 1) {
+          if (weight >= 0) {
             cellBeingEdited.weight = weight;
             this._updateWeightValueForCell(weight);
           }
@@ -49,7 +48,6 @@ export class CellComponent implements AfterViewInit {
     this.cell.domInstance.querySelector('.cell__weight').textContent = String(weight);
   }
 
-  @HostListener('dblclick', ['$event.target.parentElement.hasAttribute("data-cell")', '$event'])
   showTextEditor(isCell: boolean, event: MouseEvent) {
     if (isCell) {
       event.stopPropagation();

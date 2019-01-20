@@ -8,7 +8,9 @@
     <rect x='0'
           y='0'
           [attr.width]='cell.width'
-          [attr.height]='cell.height'>
+          [attr.height]='cell.height'
+          (click)='showEditorToAddWeightForQualityCell($event.target.parentElement.hasAttribute("data-cell"), $event)'
+          (dblclick)='showTextEditor($event.target.parentElement.hasAttribute("data-cell"), $event)'>
     </rect>
     <foreignObject x='0'
                    y='0'

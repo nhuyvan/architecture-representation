@@ -15,6 +15,8 @@ export class TextEditorComponent {
 
   private _textInput = new Subject<{ text: string, textContainerHeight: number }>();
 
+  private _isEditing = false;
+
   constructor() {
     this._textInput.pipe(take(1));
   }
@@ -44,7 +46,6 @@ export class TextEditorComponent {
   }
 
   moveIntoViewIfOverflowsOffscreen(event: KeyboardEvent) {
-    event.stopPropagation();
     if (event.key === 'Enter') {
       const inputElementBottom = this._input.nativeElement.firstElementChild.getBoundingClientRect().bottom;
       if (Math.abs(inputElementBottom - document.body.clientHeight) < 20)
@@ -52,7 +53,8 @@ export class TextEditorComponent {
     }
   }
 
-  beginEditing(initialText) {
+  beginEditing(initialText: string) {
+    this._isEditing = true;
     this._input.nativeElement.firstElementChild.innerHTML = initialText;
     this._focus();
   }
@@ -75,11 +77,17 @@ export class TextEditorComponent {
     }
   }
 
+  saveTextOnEscapeKeyPressed(event: KeyboardEvent) {
+    if (event.key === 'Escape' && this._isEditing)
+      this.onBlur();
+  }
+
   onBlur() {
     this._textInput.next({
       text: (this._input.nativeElement.firstElementChild as HTMLDivElement).innerText.trim(),
       textContainerHeight: this._input.nativeElement.firstElementChild.getBoundingClientRect().height
     });
+    this._isEditing = false;
   }
 
   finishEditing(): Observable<{ text: string, textContainerHeight: number }> {

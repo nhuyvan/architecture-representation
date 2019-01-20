@@ -579,10 +579,11 @@ export class GraphComponent implements AfterViewInit, OnInit {
     const newCell = this._createNewCell(columnId);
     this.columns[columnId] = this.columns[columnId].concat(newCell);
     this._addToDefaultCellGroup(newCell);
-    // Wait until the new cell was rendered, then highlight it
+    // Wait until the new cell was rendered, then start editing the label by dispatching double left click event
     setTimeout(() => {
-      this.selectedCells = [newCell];
       this._notifyChanges(columnId);
+      newCell.domInstance.querySelector('rect')
+        .dispatchEvent(new CustomEvent('dblclick'));
     }, 0);
   }
 
@@ -590,7 +591,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
     const defaultCellGroup = this.cellGroups[cell.column].pop();
     defaultCellGroup.addCell(cell);
     this.cellGroups[cell.column].push(defaultCellGroup);
-    this._changeDetector.detectChanges();
+    // this._changeDetector.detectChanges();
   }
 
   private _createNewCell(columnId: ColumnId): Cell {
