@@ -1,13 +1,13 @@
 <mat-dialog-content>
     <div style='display: flex'>
-        <mapper-graph-model-details [graphModel]='input.leftModel'
+        <mapper-graph-model-details [graphModel]='q1'
                                     [rowDisplay]='false'></mapper-graph-model-details>
-        <mapper-graph-model-details [graphModel]='input.rightModel'
+        <mapper-graph-model-details [graphModel]='q2'
                                     [rowDisplay]='false'></mapper-graph-model-details>
     </div>
     <hr style='margin: 20px 0' />
     <div style='text-align: center'>
-        <strong>A(q1, q2) = </strong> {{calculateAngleBetweenTwoModels()}}
+        <strong>A({{q1Name}}, {{q2Name}}) = </strong>{{calculateAngleBetweenTwoModels()}}
     </div>
 </mat-dialog-content>
 

@@ -36,8 +36,8 @@ export class CoreComponent implements OnInit {
                   if (model)
                     this._matDialog.open(GraphModelComparatorComponent, {
                       data: {
-                        leftModel: this.currentGraphModel,
-                        rightModel: model
+                        q1: this.currentGraphModel,
+                        q2: model
                       },
                       autoFocus: false
                     });

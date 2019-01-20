@@ -11,11 +11,21 @@ import { multiply, divide, dot, resize } from 'mathjs';
 })
 export class GraphModelComparatorComponent {
 
-  constructor(@Inject(MAT_DIALOG_DATA) readonly input: { leftModel: GraphModel; rightModel: GraphModel }) { }
+  readonly q1: GraphModel;
+  readonly q2: GraphModel;
+  readonly q1Name: string;
+  readonly q2Name: string;
+
+  constructor(@Inject(MAT_DIALOG_DATA) models: { q1: GraphModel; q2: GraphModel }) {
+    this.q1 = models.q1;
+    this.q2 = models.q2;
+    this.q1Name = models.q1.attributes['Graph name'] || 'q1';
+    this.q2Name = models.q2.attributes['Graph name'] || 'q2';
+  }
 
   calculateAngleBetweenTwoModels() {
-    let q1 = this.input.leftModel.q;
-    let q2 = this.input.rightModel.q;
+    let q1 = this.q1.q;
+    let q2 = this.q2.q;
     if (q1.length > q2.length)
       q2 = resize(q2, [q1.length], 0) as number[];
     else
