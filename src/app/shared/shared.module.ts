@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
@@ -22,7 +22,7 @@ import { GraphModelDetailsComponent } from './graph-model/graph-model-details/gr
   ],
   imports: [
     CommonModule, MatButtonModule, MatDialogModule, MatIconModule, ReactiveFormsModule, MatInputModule,
-    MatFormFieldModule
+    MatFormFieldModule, FormsModule
   ],
   entryComponents: [TooltipComponent, AttributeEditorComponent]
 })

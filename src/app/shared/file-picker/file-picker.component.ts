@@ -1,4 +1,4 @@
-import { Component, Host, ElementRef } from '@angular/core';
+import { Component } from '@angular/core';
 
 import { FilePickerService } from './file-picker.service';
 
@@ -9,12 +9,11 @@ import { FilePickerService } from './file-picker.service';
 })
 export class FilePickerComponent {
 
-  constructor(@Host() private _host: ElementRef<HTMLInputElement>, private _filePickerService: FilePickerService) { }
+  constructor(private _filePickerService: FilePickerService) { }
 
 
-  onFileSelected(file?: File) {
+  onFileSelected(file: File) {
     this._filePickerService.selectFile(file);
-    this._host.nativeElement.focus();
   }
 
 }

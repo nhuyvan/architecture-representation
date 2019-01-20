@@ -29,7 +29,7 @@ export class CoreComponent implements OnInit {
         switch (command.action) {
           case CommandAction.COMPARE_GRAPH_MODELS:
             if (this.currentGraphModel)
-              this._filePicker.open()
+              this._filePicker.open(true)
                 .readFileAsJson()
                 // .pipe(catchError()) TODO: Show error dialog
                 .subscribe(model => {
