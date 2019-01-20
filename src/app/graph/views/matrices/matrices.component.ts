@@ -1,12 +1,6 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-type Input = {
-  matrices: Array<{ name: string; entries: number[][] }>;
-  angle: number;
-  strength: number;
-};
-
 @Component({
   selector: 'mapper-matrices',
   templateUrl: './matrices.component.html',
@@ -14,14 +8,7 @@ type Input = {
 })
 export class MatricesComponent {
 
-  matrices: Array<{ name: string; entries: number[][] }>;
-  angle: number;
-  strength: number;
-
-  constructor(@Inject(MAT_DIALOG_DATA) readonly input: Input) {
-    this.matrices = input.matrices;
-    this.angle = input.angle;
-    this.strength = input.strength;
+  constructor(@Inject(MAT_DIALOG_DATA) readonly matrices: Array<{ name: string; entries: number[][] }>) {
   }
 
 }

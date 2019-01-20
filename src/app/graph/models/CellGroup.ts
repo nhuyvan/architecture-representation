@@ -1,5 +1,5 @@
 import { Cell } from './Cell';
-import { GroupGraphModel } from './GraphModel';
+import { GroupGraphModel } from '@shared/graph-model';
 
 export class CellGroup {
   public readonly cells: Cell[] = [];

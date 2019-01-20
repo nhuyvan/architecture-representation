@@ -1,5 +1,5 @@
-import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host, ViewEncapsulation } from '@angular/core';
-import { zeros, Matrix, multiply, subtract, matrix, transpose, divide, hypot, dot, sum } from 'mathjs';
+import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host, ViewEncapsulation, Output, EventEmitter } from '@angular/core';
+import { zeros, Matrix, multiply, subtract, matrix, transpose, divide, hypot, dot, sum, norm } from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';
@@ -13,10 +13,10 @@ import { ColumnLayoutChange, ColumnLayoutChangeType } from './models/ColumnLayou
 import { CellSelectionEvent, CellSelectionEventType } from './models/CellSelectionEvent';
 import { ColumnLayoutChangeService } from './services/column-layout-change.service';
 import { CellGroup } from './models/CellGroup';
-import { CommandService, Command } from '@shared/command';
+import { CommandService, CommandAction, Command } from '@shared/command';
 import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.component';
-import { GraphModel, CellGraphModel, LinkGraphModel } from './models/GraphModel';
-import { AttributeEditorService } from '@shared/attribute-editor';
+import { GraphModel, CellGraphModel, LinkGraphModel } from '@shared/graph-model';
+import { AttributeEditorService, Attribute } from '@shared/attribute-editor';
 import { FilePickerService } from '@shared/file-picker';
 
 @Component({
@@ -30,6 +30,9 @@ import { FilePickerService } from '@shared/file-picker';
   encapsulation: ViewEncapsulation.None
 })
 export class GraphComponent implements AfterViewInit, OnInit {
+
+  @Output()
+  modelChanged = new EventEmitter<GraphModel>();
 
   columnWidth = 0;
   columnHeight = 0;
@@ -89,38 +92,38 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
     this._commandService.observe()
       .subscribe((command: Command) => {
-        switch (command) {
-          case Command.TOGGLE_SHOW_ASSOCIATIONS:
+        switch (command.action) {
+          case CommandAction.TOGGLE_SHOW_ASSOCIATIONS:
             this._toggleAssociationsForSelectedComponents(!this.showAssociations);
             break;
-          case Command.GROUP_CELLS:
+          case CommandAction.GROUP_CELLS:
             this._groupSelectedCells();
             break;
-          case Command.UNGROUP_CELLS:
+          case CommandAction.UNGROUP_CELLS:
             this._ungroupSelectedCells();
             break;
-          case Command.SHOW_MATRICES:
+          case CommandAction.SHOW_MATRICES:
             this._showMatrices();
             break;
-          case Command.TURN_CELL_ON:
+          case CommandAction.TURN_CELL_ON:
             this._turnCellsOnOrOff(true);
             break;
-          case Command.TURN_CELL_OFF:
+          case CommandAction.TURN_CELL_OFF:
             this._turnCellsOnOrOff(false);
             break;
-          case Command.EXPORT_GRAPH_AS_PNG:
+          case CommandAction.EXPORT_GRAPH_AS_PNG:
             this._exportGraphAsPng();
             break;
-          case Command.EDIT_Dp_DETRACTOR_MATRIX:
+          case CommandAction.EDIT_Dp_DETRACTOR_MATRIX:
             this._editDpMatrix();
             break;
-          case Command.EDIT_Dq_DETRACTOR_MATRIX:
+          case CommandAction.EDIT_Dq_DETRACTOR_MATRIX:
             this._editDqMatrix();
             break;
-          case Command.SAVE_GRAPH_MODEL:
+          case CommandAction.SAVE_GRAPH_MODEL:
             this._saveGraphModel();
             break;
-          case Command.IMPORT_GRAPH_MODEL:
+          case CommandAction.IMPORT_GRAPH_MODEL:
             this._filePicker.open()
               .subscribe(file => {
                 if (file)
@@ -177,6 +180,21 @@ export class GraphComponent implements AfterViewInit, OnInit {
   }
 
   private _showMatrices() {
+    const matrices = this._computeMatrices();
+    if (matrices)
+      this._matDialog.open(MatricesComponent, {
+        data: [
+          { name: 'L', entries: matrices.L.toArray() },
+          { name: 'Dp', entries: matrices.Dp.toArray() },
+          { name: 'R', entries: matrices.R.toArray() },
+          { name: 'Dq', entries: matrices.Dq.toArray() },
+          { name: 'T', entries: matrices.T.toArray() },
+          { name: 'r', entries: matrices.r.toArray() }
+        ]
+      });
+  }
+
+  private _computeMatrices() {
     try {
       const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
       const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
@@ -200,38 +218,32 @@ export class GraphComponent implements AfterViewInit, OnInit {
       const e = matrix(this.columns.element.map(cell => cell.isOn ? 1 : 0));
       // q = [ R (L – Dp) – Dq ] e
       const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
-
       // r = w / |w|
       const totalQualityWeight = sum(this.columns.quality.map(cell => cell.weight));
       const w = matrix(this.columns.quality.map(cell => cell.weight / totalQualityWeight));
       const r = divide(w, hypot(w as any)) as Matrix;
 
-      // A(q , r) = < q , r > /[ |q| |r| ]
-      const angle = Math.acos(dot(q, r) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
-
-      // S(q , r) = < q , r > / Transpose(e)e
-      const strength = divide(dot(q, r), multiply(transpose(e), e)) as number;
       // T = R (L - Dp) – Dq
       const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
 
-      this._matDialog.open(MatricesComponent, {
-        data: {
-          matrices: [
-            { name: 'L', entries: L.toArray() },
-            { name: 'Dp', entries: this._Dp.toArray() },
-            { name: 'R', entries: R.toArray() },
-            { name: 'Dq', entries: this._Dq.toArray() },
-            { name: 'T', entries: T.toArray() },
-            { name: 'r', entries: r.toArray() }
-          ],
-          angle: angle.toFixed(2),
-          strength: strength.toFixed(2),
-        }
-      });
+      return { L, Dp: this._Dp, R, Dq: this._Dq, T, r, e, q };
     }
     catch (e) {
       console.error(e);
+      return null;
     }
+  }
+
+  private _computeAngle(q: Matrix, r: Matrix): string {
+    // A(q,r) = <q,r> /(|q||r|)
+    const angle = Math.acos(dot(q, r) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
+    return angle.toFixed(2) + ' deg';
+  }
+
+  private _computeStrength(q: Matrix, r: Matrix, e: Matrix): string {
+    // S(q,r) = <q,r> / Transpose(e)e
+    const strength = divide(dot(q, r), multiply(transpose(e), e)) as number;
+    return strength.toFixed(2);
   }
 
   private _turnCellsOnOrOff(onOrOff: boolean) {
@@ -318,12 +330,26 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this._attributeEditorService.open(initialAttributes)
       .subscribe(attributes => {
         if (attributes.length > 0) {
-          this._graphModel = {
+          this._graphModel = this._constructGraphModel(true, attributes);
+          const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          download(`${this._graphModel.attributes['Graph name']}.json` || 'graph-model.json', url);
+          URL.revokeObjectURL(url);
+        }
+      });
+  }
+
+  private _constructGraphModel(forStorage = false, attributes?: Attribute[]): GraphModel {
+    const matrices = this._computeMatrices();
+    return {
+      ...Object.assign(
+        forStorage
+          ?
+          {
             attributes: attributes.reduce((container, attr) => {
               container[attr.name] = attr.value;
               return container;
             }, {}),
-
             columns: Object.entries(this.columns)
               .reduce((container, [columnName, cells]) => {
                 container[columnName] = cells.map(this._constructCellGraphModel);
@@ -341,13 +367,19 @@ export class GraphComponent implements AfterViewInit, OnInit {
                 container.push(this._constructLinkGraphModel(source, links));
                 return container;
               }, [])
-          };
-          const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          download(`${this._graphModel.attributes['Graph name']}.json` || 'graph-model.json', url);
-          URL.revokeObjectURL(url);
-        }
-      });
+          }
+          :
+          {
+            attributes: this._graphModel.attributes,
+            columns: null,
+            groups: null,
+            links: null
+          }
+      ),
+      angle: this._computeAngle(matrices.q, matrices.r),
+      strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
+      q: matrices.q.toArray() as number[]
+    };
   }
 
   private _constructCellGraphModel(cell: Cell): CellGraphModel {
@@ -390,8 +422,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
         this._constructColumnsFromGraphModel(this._graphModel);
         this._constructLinkTableFromGraphModel(this._graphModel);
         this._notifyChanges();
+        this.modelChanged.emit(this._graphModel);
       }
       catch (e) {
+        // TODO: Show error dialog
         console.error(e);
       }
       finally {
@@ -498,7 +532,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
         this._deleteSelectedCells();
         this._ungroupSelectedCells(false);
         this.selectedCells = [];
-        this._commandService.select(Command.ACTIVATE_CELL_GROUPING);
+        this._commandService.select(CommandAction.ACTIVATE_CELL_GROUPING);
+        this.modelChanged.emit(this._constructGraphModel());
         setTimeout(() => {
           this._notifyChanges(null);
           this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
@@ -508,6 +543,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
         this._enableEntryRepresentingLinkInMatrixDp(this.selectedLink);
         this._deleteLink(this.selectedLink);
         this._notifyChanges(null);
+        this.modelChanged.emit(this._constructGraphModel());
       }
     }
   }
@@ -571,13 +607,14 @@ export class GraphComponent implements AfterViewInit, OnInit {
   onLinkSelected(link: Link) {
     this.selectedCells = [];
     this.selectedLink = link;
-    this._commandService.select(Command.ACTIVATE_SHOW_ASSOCIATIONS);
+    this._commandService.select(CommandAction.ACTIVATE_SHOW_ASSOCIATIONS);
   }
 
   onCellAdded(columnId: ColumnId) {
     const newCell = this._createNewCell(columnId);
     this.columns[columnId] = this.columns[columnId].concat(newCell);
     this._addToDefaultCellGroup(newCell);
+    this.modelChanged.emit(this._constructGraphModel());
     // Wait until the new cell was rendered, then start editing the label by dispatching double left click event
     setTimeout(() => {
       this._notifyChanges(columnId);
@@ -633,19 +670,19 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _activateCellGroupingOrCellUngroupingCommand() {
     if (this.selectedCells.length > 0) {
       if (this.selectedCells.some(cell => !cell.cellGroup.useDefaultSpacing))
-        this._commandService.select(Command.ACTIVATE_CELL_GROUPING);
+        this._commandService.select(CommandAction.ACTIVATE_CELL_GROUPING);
       else
-        this._commandService.select(Command.ACTIVATE_CELL_UNGROUPING);
+        this._commandService.select(CommandAction.ACTIVATE_CELL_UNGROUPING);
     }
     else
-      this._commandService.select(Command.ACTIVATE_CELL_GROUPING);
+      this._commandService.select(CommandAction.ACTIVATE_CELL_GROUPING);
   }
 
   private _activateTurnOnCellOrTurnOffCellCommand() {
     if (this.selectedCells.some(selected => !selected.isOn))
-      this._commandService.select(Command.ACTIVATE_TURN_ON_CELL);
+      this._commandService.select(CommandAction.ACTIVATE_TURN_ON_CELL);
     else
-      this._commandService.select(Command.ACTIVATE_TURN_OFF_CELL);
+      this._commandService.select(CommandAction.ACTIVATE_TURN_OFF_CELL);
   }
 
   private _addLinksOrAddToOrRemoveFromSelectedCells(sourceColumn: 'element' | 'property', event: CellSelectionEvent) {
@@ -654,8 +691,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
         if (this.selectedCells.length > 0) {
           const addedLinks = this.selectedCells.map(e => e.column === sourceColumn && this._addNewLink(e, event.cell))
             .filter(added => added);
-          if (addedLinks.length > 0)
+          if (addedLinks.length > 0) {
             this._notifyChanges(null);
+            this.modelChanged.emit(this._constructGraphModel());
+          }
           else
             this._addToOrRemoveFromSelectedCells(event);
         }

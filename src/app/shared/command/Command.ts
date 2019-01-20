@@ -1,4 +1,4 @@
-export enum Command {
+export enum CommandAction {
   ACTIVATE_SHOW_ASSOCIATIONS, TOGGLE_SHOW_ASSOCIATIONS,
   GROUP_CELLS, UNGROUP_CELLS, ACTIVATE_CELL_GROUPING, ACTIVATE_CELL_UNGROUPING,
   SHOW_MATRICES,
@@ -8,4 +8,9 @@ export enum Command {
   EDIT_Dq_DETRACTOR_MATRIX,
   IMPORT_GRAPH_MODEL,
   SAVE_GRAPH_MODEL
+}
+
+export interface Command {
+  action: CommandAction;
+  payload: any;
 }

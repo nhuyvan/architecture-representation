@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { GraphModel } from '@shared/graph-model';
 
 @Component({
   selector: 'mapper-core',
@@ -7,5 +8,11 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CoreComponent {
+
+  currentGraphModel: GraphModel;
+
+  onGraphModelChanged(newModel: GraphModel) {
+    this.currentGraphModel = newModel;
+  }
 
 }

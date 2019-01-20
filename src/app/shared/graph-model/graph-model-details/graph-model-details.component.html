@@ -1,0 +1,8 @@
+<div *ngIf='graphModel'
+     class='graph-model-details {{rowDisplay ? "row-display" : "column-display"}}'>
+    <div class='graph-model-detail'
+         *ngFor='let detail of details'>
+        <span class='graph-model-detail__name'>{{detail.name}}</span>
+        <span class='graph-model-detail__value'>{{detail.value}}</span>
+    </div>
+</div>

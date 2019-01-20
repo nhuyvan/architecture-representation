@@ -1,8 +1,9 @@
 mapper-graph {
     display: block;
     width: 95vw;
-    height: 99vh;
-    overflow: hidden auto !important;
+    height: 100%;
+    overflow-y: auto !important;
+    margin-left: 0 !important;
 }
 
 svg {

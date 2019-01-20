@@ -1,3 +1,6 @@
 <mapper-commands></mapper-commands>
-<mapper-graph></mapper-graph>
+<div style='display: flex;flex-flow:column nowrap;height: 100%'>
+    <mapper-graph-model-details [graphModel]='currentGraphModel'></mapper-graph-model-details>
+    <mapper-graph (modelChanged)='onGraphModelChanged($event)'></mapper-graph>
+</div>
 <mapper-file-picker></mapper-file-picker>

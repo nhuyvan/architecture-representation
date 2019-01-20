@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 
-import { Command } from './Command';
+import { CommandAction, Command } from './Command';
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +12,8 @@ export class CommandService {
 
   constructor() { }
 
-  select(command: Command) {
-    this._commandSelected.next(command);
+  select(action: CommandAction, payload?: any) {
+    this._commandSelected.next({ action, payload });
   }
 
   observe(): Observable<Command> {

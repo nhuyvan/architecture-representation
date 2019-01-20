@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { Command, CommandService } from '@shared/command/';
+import { CommandAction, CommandService } from '@shared/command';
 
 
 @Component({
@@ -22,20 +22,20 @@ export class CommandsComponent implements OnInit {
   ngOnInit() {
     this._commandService.observe()
       .subscribe(command => {
-        switch (command) {
-          case Command.ACTIVATE_SHOW_ASSOCIATIONS:
+        switch (command.action) {
+          case CommandAction.ACTIVATE_SHOW_ASSOCIATIONS:
             this.showAssociationsSelected = false;
             break;
-          case Command.ACTIVATE_CELL_GROUPING:
+          case CommandAction.ACTIVATE_CELL_GROUPING:
             this.cellGroupingSelected = true;
             break;
-          case Command.ACTIVATE_CELL_UNGROUPING:
+          case CommandAction.ACTIVATE_CELL_UNGROUPING:
             this.cellGroupingSelected = false;
             break;
-          case Command.ACTIVATE_TURN_OFF_CELL:
+          case CommandAction.ACTIVATE_TURN_OFF_CELL:
             this.turnOffCellSelected = true;
             break;
-          case Command.ACTIVATE_TURN_ON_CELL:
+          case CommandAction.ACTIVATE_TURN_ON_CELL:
             this.turnOffCellSelected = false;
             break;
         }
@@ -44,41 +44,41 @@ export class CommandsComponent implements OnInit {
 
 
   toggleShowAssociations() {
-    this._commandService.select(Command.TOGGLE_SHOW_ASSOCIATIONS);
+    this._commandService.select(CommandAction.TOGGLE_SHOW_ASSOCIATIONS);
     this.showAssociationsSelected = !this.showAssociationsSelected;
   }
 
   toggleCellGrouping() {
-    this._commandService.select(this.cellGroupingSelected ? Command.GROUP_CELLS : Command.UNGROUP_CELLS);
+    this._commandService.select(this.cellGroupingSelected ? CommandAction.GROUP_CELLS : CommandAction.UNGROUP_CELLS);
     this.cellGroupingSelected = !this.cellGroupingSelected;
   }
 
   showMatrices() {
-    this._commandService.select(Command.SHOW_MATRICES);
+    this._commandService.select(CommandAction.SHOW_MATRICES);
   }
 
   turnCellOnOrOff() {
-    this._commandService.select(this.turnOffCellSelected ? Command.TURN_CELL_OFF : Command.TURN_CELL_ON);
+    this._commandService.select(this.turnOffCellSelected ? CommandAction.TURN_CELL_OFF : CommandAction.TURN_CELL_ON);
     this.turnOffCellSelected = !this.turnOffCellSelected;
   }
 
   exportGraphAsPng() {
-    this._commandService.select(Command.EXPORT_GRAPH_AS_PNG);
+    this._commandService.select(CommandAction.EXPORT_GRAPH_AS_PNG);
   }
 
   editDpDetractorMatrix() {
-    this._commandService.select(Command.EDIT_Dp_DETRACTOR_MATRIX);
+    this._commandService.select(CommandAction.EDIT_Dp_DETRACTOR_MATRIX);
   }
 
   editDqDetractorMatrix() {
-    this._commandService.select(Command.EDIT_Dq_DETRACTOR_MATRIX);
+    this._commandService.select(CommandAction.EDIT_Dq_DETRACTOR_MATRIX);
   }
 
   saveGraphModel() {
-    this._commandService.select(Command.SAVE_GRAPH_MODEL);
+    this._commandService.select(CommandAction.SAVE_GRAPH_MODEL);
   }
 
   importGraphModel() {
-    this._commandService.select(Command.IMPORT_GRAPH_MODEL);
+    this._commandService.select(CommandAction.IMPORT_GRAPH_MODEL);
   }
 }

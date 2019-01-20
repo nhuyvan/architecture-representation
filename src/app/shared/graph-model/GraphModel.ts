@@ -1,5 +1,3 @@
-import { ColumnId } from './Column';
-
 export interface GraphModel {
   attributes: {
     [attributeName: string]: string;
@@ -15,6 +13,9 @@ export interface GraphModel {
     quality: GroupGraphModel[];
   };
   links: Array<LinkGraphModel>;
+  angle: string;
+  strength: string;
+  q: number[];
 }
 
 export interface CellGraphModel {
@@ -43,6 +44,6 @@ export interface GroupGraphModel {
 
 export interface LinkGraphModel {
   sourceId: number;
-  sourceColumn: ColumnId;
-  targets: Array<{ targetId: number; targetColumn: ColumnId; idSelector: string; weight: number }>;
+  sourceColumn: string;
+  targets: Array<{ targetId: number; targetColumn: string; idSelector: string; weight: number }>;
 }
