@@ -249,7 +249,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
     graph.querySelectorAll('*[data-selected]')
       .forEach(selected => selected.removeAttribute('data-selected'));
     svgAsPngUri(graph, {}, (uri: string) => {
-      download('graph.png', uri);
+      download(this._graphModel.attributes['Graph name'] || 'graph.png', uri);
       document.body.removeChild(graph);
     });
   }
@@ -298,8 +298,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
     if (!this._graphModel)
       initialAttributes.push(
         { name: 'Graph name', value: '' },
-        { name: 'Author', value: '' },
-        { name: 'Version', value: '1.0' },
         { name: 'Date created', value: new DatePipe('en-US').transform(new Date(), 'MM/dd/yyyy, HH:mm:ss zzzz') }
       );
     else
@@ -310,14 +308,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
             if (a.name === 'Graph name')
               return -1;
             if (b.name === 'Graph name')
-              return 1;
-            if (a.name === 'Author')
-              return -1;
-            if (b.name === 'Author')
-              return 1;
-            if (a.name === 'Version')
-              return -1;
-            if (b.name === 'Version')
               return 1;
             if (a.name === 'Date created')
               return -1;
@@ -396,10 +386,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
     const fileReader = new FileReader();
     fileReader.onload = event => {
       try {
-        const model: GraphModel = JSON.parse((event.target as FileReader).result as string);
-        this._constructCellGroupsFromGraphModel(model);
-        this._constructColumnsFromGraphModel(model);
-        this._constructLinkTableFromGraphModel(model);
+        this._graphModel = JSON.parse((event.target as FileReader).result as string);
+        this._constructCellGroupsFromGraphModel(this._graphModel);
+        this._constructColumnsFromGraphModel(this._graphModel);
+        this._constructLinkTableFromGraphModel(this._graphModel);
         this._notifyChanges();
       }
       catch (e) {
