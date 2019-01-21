@@ -16,6 +16,16 @@ export class CommandsComponent implements OnInit {
   showAssociationsSelected = false;
   cellGroupingSelected = true;
   turnOffCellSelected = true;
+  help = [
+    '-  Left-click a cell to select it (Selected cells have dashed borders)',
+    '-  Left-click a link to select it (Selected link appears thicker)',
+    '-  Double-click a cell to edit its label',
+    '-  Double-click a link to edit its weight',
+    '-  Control(Windows) | Command(Mac) + left-click a quality cell to edit its quality weight',
+    '-  Control(Windows) | Command(Mac) + left-click a link to change its color',
+    '-  Shift + left-click a cell to add to currently selected cells',
+    '-  Press escape key or click away to store new value when editing'
+  ].join('<br/>');
 
   constructor(private _commandService: CommandService) { }
 

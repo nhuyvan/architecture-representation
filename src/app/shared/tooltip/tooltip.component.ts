@@ -26,15 +26,20 @@ export class TooltipComponent implements AfterViewInit {
 
   @ViewChild('tooltip')
   private _tooltipElementRef: ElementRef;
+  private _tooltip: HTMLDivElement;
   private _onHide: () => void;
-  private _tooltipRect: ClientRect;
+  private _width = 0;
+  private _height = 0;
 
   constructor() { }
 
   ngAfterViewInit() {
     if (!['top', 'right', 'bottom', 'left'].includes(this.position))
       throw new Error('Invalid tooltip position: ' + this.position);
-    this._tooltipRect = this._tooltipElementRef.nativeElement.getBoundingClientRect();
+    this._tooltip = this._tooltipElementRef.nativeElement;
+    const tooltipRect = this._tooltip.getBoundingClientRect();
+    this._width = tooltipRect.width;
+    this._height = tooltipRect.height;
   }
 
   hide() {
@@ -42,13 +47,13 @@ export class TooltipComponent implements AfterViewInit {
   }
 
   onMouseOut(target) {
-    if (target === this._tooltipElementRef.nativeElement || this._tooltipElementRef.nativeElement.contains(target))
-      this._tooltipElementRef.nativeElement.style.opacity = '1';
+    if (target === this._tooltip || this._tooltip.contains(target))
+      this._tooltip.style.opacity = '1';
   }
 
   onMouseOver(target) {
-    if (target === this._tooltipElementRef.nativeElement || this._tooltipElementRef.nativeElement.contains(target)) {
-      this._tooltipElementRef.nativeElement.style.opacity = '0';
+    if (target === this._tooltip || this._tooltip.contains(target)) {
+      this._tooltip.style.opacity = '0';
     }
   }
 
@@ -100,15 +105,30 @@ export class TooltipComponent implements AfterViewInit {
 
   private _showTop(originRect: ClientRect) {
     setTimeout(() => {
-      const left = originRect.left + (originRect.width - this._tooltipRect.width) / 2;
+      const left = originRect.left + (originRect.width - this._width) / 2;
       let top = originRect.top - originRect.height - 25;
       if (top < 0) {
-        this._tooltipElementRef.nativeElement.classList.remove('top');
-        this._tooltipElementRef.nativeElement.classList.add('bottom');
-        top = top + originRect.height + this._tooltipRect.height + 25;
+        this._tooltip.classList.remove('top');
+        this._tooltip.classList.add('bottom');
+        top = top + originRect.height + this._height + 25;
       }
-      this._tooltipElementRef.nativeElement.style.left = left + 'px';
-      this._tooltipElementRef.nativeElement.style.top = top + 'px';
+      this._tooltip.style.left = left + 'px';
+      this._tooltip.style.top = top + 'px';
+    }, 0);
+
+  }
+
+  private _showBottom(originRect: ClientRect) {
+    setTimeout(() => {
+      const left = originRect.left + (originRect.width - this._width) / 2;
+      let top = originRect.top + originRect.height + 12;
+      if (top + this._height + 10 > document.body.clientHeight) {
+        this._tooltip.classList.remove('bottom');
+        this._tooltip.classList.add('top');
+        top = top - originRect.height - this._height - 30;
+      }
+      this._tooltip.style.left = left + 'px';
+      this._tooltip.style.top = top + 'px';
     }, 0);
 
   }
@@ -116,30 +136,16 @@ export class TooltipComponent implements AfterViewInit {
   private _showRight(originRect: ClientRect) {
     setTimeout(() => {
       let left = originRect.left + originRect.width + 10;
-      const top = originRect.top + (originRect.height - this._tooltipRect.height) / 2;
-      if (left + this._tooltipRect.width > document.body.clientWidth) {
-        this._tooltipElementRef.nativeElement.classList.remove('right');
-        this._tooltipElementRef.nativeElement.classList.add('left');
-        left = left - originRect.width - this._tooltipRect.width - 30;
+      const top = originRect.top + (originRect.height - this._height) / 2;
+      if (left + this._width > document.body.clientWidth) {
+        this._tooltip.classList.remove('right');
+        this._tooltip.classList.add('left');
+        left = left - originRect.width - this._width - 30;
       }
-      this._tooltipElementRef.nativeElement.style.left = left + 'px';
-      this._tooltipElementRef.nativeElement.style.top = top + 'px';
+      this._shiftTooltipIntoViewFromBottom(top);
+      this._tooltip.style.left = left + 'px';
+      this._tooltip.style.top = top + 'px';
     }, 0);
-  }
-
-  private _showBottom(originRect: ClientRect) {
-    setTimeout(() => {
-      const left = originRect.left + (originRect.width - this._tooltipRect.width) / 2;
-      let top = originRect.top + originRect.height + 12;
-      if (top + this._tooltipRect.height + 10 > document.body.clientHeight) {
-        this._tooltipElementRef.nativeElement.classList.remove('bottom');
-        this._tooltipElementRef.nativeElement.classList.add('top');
-        top = top - originRect.height - this._tooltipRect.height - 30;
-      }
-      this._tooltipElementRef.nativeElement.style.left = left + 'px';
-      this._tooltipElementRef.nativeElement.style.top = top + 'px';
-    }, 0);
-
   }
 
   private _showLeft(originRect: ClientRect) {
@@ -148,17 +154,39 @@ export class TooltipComponent implements AfterViewInit {
       is called, tooltip component might not be visible yet, so it can't calculate tooltip's client rect
     */
     setTimeout(() => {
-      let left = originRect.left - this._tooltipRect.width - 15;
-      const top = originRect.top + (originRect.height - this._tooltipRect.height) / 2;
+      let left = originRect.left - this._width - 15;
+      const top = originRect.top + (originRect.height - this._height) / 2;
       if (left < 0) {
-        this._tooltipElementRef.nativeElement.classList.remove('left');
-        this._tooltipElementRef.nativeElement.classList.add('right');
-        left = left + originRect.width + this._tooltipRect.width + 30;
+        this._tooltip.classList.remove('left');
+        this._tooltip.classList.add('right');
+        left = left + originRect.width + this._width + 30;
       }
-      this._tooltipElementRef.nativeElement.style.left = left + 'px';
-      this._tooltipElementRef.nativeElement.style.top = top + 'px';
+      if (!this._shiftTooltipIntoViewFromBottom(top))
+        this._shiftTooltipIntoViewFromTop(top);
+      this._tooltip.style.left = left + 'px';
+      this._tooltip.style.top = top + 'px';
     }, 0);
 
+  }
+
+  private _shiftTooltipIntoViewFromBottom(top: number) {
+    const difference = top + this._height - document.body.clientHeight + 5;
+    if (difference > 5) {
+      this._tooltip.style.transform = `translateY(-${difference}px)`;
+      (this._tooltip.querySelector('.mapper-tooltip__arrow') as HTMLElement).style.top = `calc(50% + ${difference}px)`;
+      return true;
+    }
+    return false;
+  }
+
+  private _shiftTooltipIntoViewFromTop(top: number) {
+    if (top < 0) {
+      top = Math.abs(top) + 5;
+      this._tooltip.style.transform = `translateY(${top}px)`;
+      (this._tooltip.querySelector('.mapper-tooltip__arrow') as HTMLElement).style.top = `calc(50% - ${top}px)`;
+      return true;
+    }
+    return false;
   }
 
 }
