@@ -239,13 +239,13 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _computeAngle(q: Matrix, r: Matrix): string {
     // A(q,r) = <q,r> /(|q||r|)
     const angle = Math.acos(dot(q, r) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
-    return angle.toFixed(2) + ' deg';
+    return angle ? angle.toFixed(2) + ' deg' : '';
   }
 
   private _computeStrength(q: Matrix, r: Matrix, e: Matrix): string {
     // S(q,r) = <q,r> / Transpose(e)e
     const strength = divide(dot(q, r), multiply(transpose(e), e)) as number;
-    return strength.toFixed(2);
+    return strength ? strength.toFixed(2) : '';
   }
 
   private _turnCellsOnOrOff(onOrOff: boolean) {
@@ -341,6 +341,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
           const url = URL.createObjectURL(blob);
           download(`${this._graphModel.attributes['Graph name']}.json` || 'graph-model.json', url);
           URL.revokeObjectURL(url);
+          this.modelChanged.emit(this._graphModel);
         }
       });
   }
@@ -377,7 +378,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
             }
             :
             {
-              attributes: this._graphModel.attributes,
+              attributes: (this._graphModel || { attributes: {} }).attributes,
               columns: null,
               groups: null,
               links: null
@@ -387,7 +388,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
         strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
         q: matrices.q.toArray() as number[]
       };
-    return null;
+    return { attributes: {} } as GraphModel;
   }
 
   private _constructCellGraphModel(cell: Cell): CellGraphModel {

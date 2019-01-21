@@ -13,7 +13,15 @@
     height: 5vh;
     flex-flow: row nowrap;
     align-items: center;
-    justify-content: space-around;
+    overflow-x: auto;
+    font-size: 0.9em;
+    padding: 0 5px;
+    .graph-model-detail {
+        white-space: nowrap;
+    }
+    .graph-model-detail:not(:last-of-type) {
+        margin-right: 20px;
+    }
     .graph-model-detail__name::after {
         content: ': ';
         font-weight: bold;

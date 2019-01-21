@@ -28,27 +28,32 @@ export class CoreComponent implements OnInit {
       .subscribe(command => {
         switch (command.action) {
           case CommandAction.COMPARE_GRAPH_MODELS:
-            if (this.currentGraphModel)
-              this._filePicker.open(true)
-                .readFileAsJson()
-                // .pipe(catchError()) TODO: Show error dialog
-                .subscribe(model => {
-                  if (model)
-                    this._matDialog.open(GraphModelComparatorComponent, {
-                      data: {
-                        q1: this.currentGraphModel,
-                        q2: model
-                      },
-                      autoFocus: false
-                    });
-                });
-            else {
-              // TODO: Show dialog informing that there is no current model
-            }
+            this._compareGraphModels();
             break;
         }
       });
   }
+
+  private _compareGraphModels() {
+    if (this.currentGraphModel)
+      this._filePicker.open(true)
+        .readFileAsJson()
+        // .pipe(catchError()) TODO: Show error dialog
+        .subscribe(model => {
+          if (model)
+            this._matDialog.open(GraphModelComparatorComponent, {
+              data: {
+                q1: this.currentGraphModel,
+                q2: model
+              },
+              autoFocus: false
+            });
+        });
+    else {
+      // TODO: Show dialog informing that there is no current model
+    }
+  }
+
 
   onGraphModelChanged(newModel: GraphModel) {
     this.currentGraphModel = newModel;
