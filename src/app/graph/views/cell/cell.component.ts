@@ -4,6 +4,8 @@ import { Cell } from '../../models/Cell';
 import { TextEditorService } from '../text-editor/text-editor.service';
 import { ColumnLayoutChangeService } from '../../services/column-layout-change.service';
 import { ColumnLayoutChangeType } from '../../models/ColumnLayoutChange';
+import { GraphModelChangeService } from '../../services/graph-model-change.service';
+import { GraphModelChangeType } from '../../models/GraphModelChangeType';
 
 @Component({
   selector: 'g[cell]',
@@ -21,7 +23,8 @@ export class CellComponent implements AfterViewInit {
 
   constructor(
     private _textEditorService: TextEditorService,
-    private _columnLayoutChange: ColumnLayoutChangeService) {
+    private _columnLayoutChange: ColumnLayoutChangeService,
+    private _graphModelChangeService: GraphModelChangeService) {
 
   }
 
@@ -36,9 +39,12 @@ export class CellComponent implements AfterViewInit {
       this._textEditorService.show(this.cell, String(this.cell.weight))
         .textAdded((payload, cellBeingEdited) => {
           const weight = +payload.text;
-          if (weight >= 0) {
-            cellBeingEdited.weight = weight;
+          if (weight >= 0 && weight !== cellBeingEdited.weight) {
             this._updateWeightValueForCell(weight);
+            this._graphModelChangeService.notify(
+              GraphModelChangeType.QUALITY_WEIGHT_UPDATED,
+              { cell: cellBeingEdited, weight }
+            );
           }
         });
     }
@@ -58,18 +64,23 @@ export class CellComponent implements AfterViewInit {
   }
 
   private _onTextAdded(payload: { text: string, textContainerHeight: number }, cellBeingEdited: Cell) {
-    this._addTextToCellBeingEdited(payload.text, cellBeingEdited);
-    const heightDifference = payload.textContainerHeight - cellBeingEdited.height;
-    if (heightDifference !== 0) {
-      cellBeingEdited.height = Math.max(payload.textContainerHeight + 10, 50); // 10 = padding top and bottom
-      this._columnLayoutChange.notify(
-        cellBeingEdited.column,
-        heightDifference < 0 ? ColumnLayoutChangeType.CELL_HEIGHT_DECREASED : ColumnLayoutChangeType.CELL_HEIGHT_INCREASED,
-        cellBeingEdited
+    if (payload.text !== cellBeingEdited.text) {
+      this._addTextToCellBeingEdited(payload.text, cellBeingEdited);
+      const heightDifference = payload.textContainerHeight - cellBeingEdited.height;
+      if (heightDifference !== 0) {
+        cellBeingEdited.height = Math.max(payload.textContainerHeight + 10, 50); // 10 = padding top and bottom
+        this._columnLayoutChange.notify(
+          cellBeingEdited.column,
+          heightDifference < 0 ? ColumnLayoutChangeType.CELL_HEIGHT_DECREASED : ColumnLayoutChangeType.CELL_HEIGHT_INCREASED,
+          cellBeingEdited
+        );
+      }
+      cellBeingEdited.domInstance.removeAttribute('data-selected');
+      this._graphModelChangeService.notify(
+        GraphModelChangeType.CELL_TEXT_UPDATED,
+        { cell: cellBeingEdited, text: payload.text }
       );
     }
-    cellBeingEdited.text = payload.text;
-    cellBeingEdited.domInstance.removeAttribute('data-selected');
   }
 
   private _addTextToCellBeingEdited(text: string, cellBeingEdited: Cell) {

@@ -18,6 +18,8 @@ import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.compo
 import { GraphModel, CellGraphModel, LinkGraphModel } from '@shared/graph-model';
 import { Attribute, AttributeEditorComponent } from '@shared/attribute-editor';
 import { FilePickerService } from '@shared/file-picker';
+import { GraphModelChangeService } from './services/graph-model-change.service';
+import { GraphModelChangeType } from './models/GraphModelChangeType';
 
 @Component({
   selector: 'mapper-graph',
@@ -27,7 +29,8 @@ import { FilePickerService } from '@shared/file-picker';
   host: {
     class: 'frame'
   },
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  providers: [GraphModelChangeService]
 })
 export class GraphComponent implements AfterViewInit, OnInit {
 
@@ -66,7 +69,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
     private _commandService: CommandService,
     @Host() private readonly _hostElement: ElementRef<HTMLElement>,
     private _matDialog: MatDialog,
-    private _filePicker: FilePickerService
+    private _filePicker: FilePickerService,
+    private _graphModeChange: GraphModelChangeService
   ) {
   }
 
@@ -88,6 +92,22 @@ export class GraphComponent implements AfterViewInit, OnInit {
   ngOnInit() {
     this._columnLayoutChange.observe()
       .subscribe(layoutChange => this._onColumnLayoutChanged(layoutChange));
+
+    this._graphModeChange.observe()
+      .subscribe(change => {
+        switch (change.type) {
+          case GraphModelChangeType.QUALITY_WEIGHT_UPDATED:
+            change.payload.cell.weight = change.payload.weight;
+            this._graphModel = this._constructGraphModel();
+            this.modelChanged.emit(this._graphModel);
+            this._filePicker.clearSelection();
+            break;
+          case GraphModelChangeType.CELL_TEXT_UPDATED:
+            change.payload.cell.text = change.payload.text;
+            this._filePicker.clearSelection();
+            break;
+        }
+      });
 
     this._commandService.observe()
       .subscribe((command: Command) => {
@@ -114,9 +134,11 @@ export class GraphComponent implements AfterViewInit, OnInit {
             this._exportGraphAsPng();
             break;
           case CommandAction.EDIT_Dp_DETRACTOR_MATRIX:
+            this._filePicker.clearSelection();
             this._editDpMatrix();
             break;
           case CommandAction.EDIT_Dq_DETRACTOR_MATRIX:
+            this._filePicker.clearSelection();
             this._editDqMatrix();
             break;
           case CommandAction.SAVE_GRAPH_MODEL:
@@ -611,6 +633,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this.columns[columnId] = this.columns[columnId].concat(newCell);
     this._addToDefaultCellGroup(newCell);
     this.modelChanged.emit(this._constructGraphModel());
+    this._filePicker.clearSelection();
     // Wait until the new cell was rendered, then start editing the label by dispatching double left click event
     setTimeout(() => {
       this._notifyChanges(columnId);
@@ -690,6 +713,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
           if (addedLinks.length > 0) {
             this._notifyChanges(null);
             this.modelChanged.emit(this._constructGraphModel());
+            this._filePicker.clearSelection();
           }
           else
             this._addToOrRemoveFromSelectedCells(event);

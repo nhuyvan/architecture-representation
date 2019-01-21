@@ -16,6 +16,10 @@ export class FilePickerService {
     this._fileSelection.next(file);
   }
 
+  clearSelection() {
+    (document.querySelector('input.file-picker').parentElement as HTMLFormElement).reset();
+  }
+
   open(clearPreviousSelection = false): FilePickerService {
     const filePicker = document.querySelector('input.file-picker') as HTMLInputElement;
     if (clearPreviousSelection)
