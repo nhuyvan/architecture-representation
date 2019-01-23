@@ -35,8 +35,9 @@ export class CoreComponent implements OnInit {
   }
 
   private _compareGraphModels() {
-    if (this.currentGraphModel)
-      this._filePicker.open(true)
+    if (this.currentGraphModel) {
+      this._filePicker.clearSelection();
+      this._filePicker.open()
         .readFileAsJson()
         // .pipe(catchError()) TODO: Show error dialog
         .subscribe(model => {
@@ -49,6 +50,7 @@ export class CoreComponent implements OnInit {
               autoFocus: false
             });
         });
+    }
     else {
       // TODO: Show dialog informing that there is no current model
     }

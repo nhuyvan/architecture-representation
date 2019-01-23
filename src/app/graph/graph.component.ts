@@ -1,5 +1,5 @@
 import { Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host, ViewEncapsulation, Output, EventEmitter } from '@angular/core';
-import { zeros, Matrix, multiply, subtract, matrix, transpose, divide, hypot, dot, sum, norm } from 'mathjs';
+import { zeros, Matrix, multiply, subtract, matrix, transpose, divide, hypot, dot, sum, diag, ones } from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';
@@ -19,7 +19,7 @@ import { GraphModel, CellGraphModel, LinkGraphModel } from '@shared/graph-model'
 import { Attribute, AttributeEditorComponent } from '@shared/attribute-editor';
 import { FilePickerService } from '@shared/file-picker';
 import { GraphModelChangeService } from './services/graph-model-change.service';
-import { GraphModelChangeType } from './models/GraphModelChangeType';
+import { GraphModelChangeType, GraphModelChange } from './models/GraphModelChangeType';
 
 @Component({
   selector: 'mapper-graph',
@@ -97,14 +97,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
       .subscribe(change => {
         switch (change.type) {
           case GraphModelChangeType.QUALITY_WEIGHT_UPDATED:
-            change.payload.cell.weight = change.payload.weight;
-            this._graphModel = this._constructGraphModel();
-            this.modelChanged.emit(this._graphModel);
-            this._filePicker.clearSelection();
+            this._qualityWeightUpdated(change);
             break;
           case GraphModelChangeType.CELL_TEXT_UPDATED:
-            change.payload.cell.text = change.payload.text;
-            this._filePicker.clearSelection();
+            this._cellTextUpdated(change);
             break;
         }
       });
@@ -145,16 +141,22 @@ export class GraphComponent implements AfterViewInit, OnInit {
             this._saveGraphModel();
             break;
           case CommandAction.IMPORT_GRAPH_MODEL:
-            this._filePicker.open()
-              .readFileAsJson<GraphModel>()
-              // .pipe(catchError(err => { console.log(err); return of(null); })) TODO: Show error dialog
-              .subscribe(model => {
-                if (model)
-                  this._importGraphModel(model);
-              });
+            this._importGraphModel();
             break;
         }
       });
+  }
+
+  private _qualityWeightUpdated(changeEvent: GraphModelChange) {
+    changeEvent.payload.cell.weight = changeEvent.payload.weight;
+    this._graphModel = this._constructGraphModel();
+    this.modelChanged.emit(this._graphModel);
+    this._filePicker.clearSelection();
+  }
+
+  private _cellTextUpdated(changeEvent: GraphModelChange) {
+    changeEvent.payload.cell.text = changeEvent.payload.text;
+    this._filePicker.clearSelection();
   }
 
   private _toggleAssociationsForSelectedComponents(state: boolean) {
@@ -242,10 +244,13 @@ export class GraphComponent implements AfterViewInit, OnInit {
       const e = matrix(this.columns.element.map(cell => cell.isOn ? 1 : 0));
       // q = [ R (L – Dp) – Dq ] e
       const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
-      // r = w / |w|
+      // r = Wq0 / |Wq0|
       const totalQualityWeight = sum(this.columns.quality.map(cell => cell.weight));
       const w = matrix(this.columns.quality.map(cell => cell.weight / totalQualityWeight));
-      const r = divide(w, hypot(w as any)) as Matrix;
+      const q0 = matrix(ones(q.size()));
+      const W = diag(w);
+      const WTimesq0 = multiply(W, q0);
+      const r = divide(WTimesq0, hypot(WTimesq0 as any)) as Matrix;
 
       // T = R (L - Dp) – Dq
       const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
@@ -444,13 +449,20 @@ export class GraphComponent implements AfterViewInit, OnInit {
     };
   }
 
-  private _importGraphModel(graphModel: GraphModel) {
-    this._graphModel = graphModel;
-    this._constructCellGroupsFromGraphModel(graphModel);
-    this._constructColumnsFromGraphModel(graphModel);
-    this._constructLinkTableFromGraphModel(graphModel);
-    this._notifyChanges();
-    this.modelChanged.emit(graphModel);
+  private _importGraphModel() {
+    this._filePicker.open()
+      .readFileAsJson<GraphModel>()
+      // .pipe(catchError(err => { console.log(err); return of(null); })) TODO: Show error dialog
+      .subscribe(graphModel => {
+        if (graphModel) {
+          this._graphModel = graphModel;
+          this._constructCellGroupsFromGraphModel(graphModel);
+          this._constructColumnsFromGraphModel(graphModel);
+          this._constructLinkTableFromGraphModel(graphModel);
+          this._notifyChanges();
+          this.modelChanged.emit(graphModel);
+        }
+      });
   }
 
   private _constructCellGroupsFromGraphModel(graphModel: GraphModel) {

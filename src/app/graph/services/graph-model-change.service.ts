@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { GraphModelChange, GraphModelChangeType } from '../models/GraphModelChangeType';
 import { Subject, Observable } from 'rxjs';
+
+import { GraphModelChange, GraphModelChangeType } from '../models/GraphModelChangeType';
 
 @Injectable()
 export class GraphModelChangeService {
