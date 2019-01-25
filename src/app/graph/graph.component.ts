@@ -576,6 +576,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
         this.modelChanged.emit(this._constructGraphModel());
       }
     }
+    else if (event.key === 'Escape')
+      this._unselectAllSelectedComponents();
   }
 
   private _deleteSelectedCells() {

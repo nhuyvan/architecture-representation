@@ -25,7 +25,8 @@ export class CommandsComponent implements OnInit {
     '-  Control(Windows) | Command(Mac) + left-click a link to change its color',
     '-  Shift + left-click a cell to add to currently selected cells',
     '-  Press escape key or click away to store new value when editing',
-    '-  Press delete key to remove currently selected components'
+    '-  Press escape key to unselect currently selected cells/link',
+    '-  Press delete key to remove currently selected cells/link'
   ].join('<br/>');
 
   constructor(private _commandService: CommandService) { }
