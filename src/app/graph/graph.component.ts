@@ -258,7 +258,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
       return { L, Dp: this._Dp, R, Dq: this._Dq, T, r, e, q };
     }
     catch (e) {
-      console.warn(e.message);
+      console.warn(`[${GraphComponent.name} -> ${this._computeMatrices.name}] ${e.message}`);
       return null;
     }
   }
@@ -415,7 +415,12 @@ export class GraphComponent implements AfterViewInit, OnInit {
         strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
         q: matrices.q.toArray() as number[]
       };
-    return { attributes: {} } as GraphModel;
+    return {
+      attributes: attributes.reduce((container, attr) => {
+        container[attr.name] = attr.value;
+        return container;
+      }, {})
+    } as GraphModel;
   }
 
   private _constructCellGraphModel(cell: Cell): CellGraphModel {
