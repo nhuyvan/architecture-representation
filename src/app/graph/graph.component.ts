@@ -258,7 +258,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
       return { L, Dp: this._Dp, R, Dq: this._Dq, T, r, e, q };
     }
     catch (e) {
-      console.warn(`[${GraphComponent.name} -> ${this._computeMatrices.name}] ${e.message}`);
+      console.warn(`[GraphComponent -> _computeMatrices] ${e.message}`);
       return null;
     }
   }
@@ -366,7 +366,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
           this._graphModel = this._constructGraphModel(true, attributes);
           const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
-          download(`${this._graphModel.attributes['Graph name']}.json` || 'graph-model.json', url);
+          download(`${this._graphModel.attributes['Graph name'] || 'graph-model'}.json`, url);
           URL.revokeObjectURL(url);
           this.modelChanged.emit(this._graphModel);
         }
