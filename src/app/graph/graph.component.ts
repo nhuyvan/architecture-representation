@@ -416,10 +416,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
         q: matrices.q.toArray() as number[]
       };
     return {
-      attributes: attributes.reduce((container, attr) => {
+      attributes: attributes ? attributes.reduce((container, attr) => {
         container[attr.name] = attr.value;
         return container;
-      }, {})
+      }, {}) : {}
     } as GraphModel;
   }
 
