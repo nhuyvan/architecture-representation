@@ -3,15 +3,11 @@ import { GroupGraphModel } from '@shared/graph-model';
 
 export class CellGroup {
   public readonly cells: Cell[] = [];
-  constructor(
-    public id: number,
-    readonly useDefaultSpacing: boolean,
-    public left: number,
-    public top: number,
-    public width: number,
-    public height: number
-  ) {
-
+  public left = 0;
+  public top = 0;
+  public width = 0;
+  public height = 0;
+  constructor(public id: number, readonly useDefaultSpacing: boolean) {
   }
 
   addCell(cell: Cell) {
@@ -20,10 +16,6 @@ export class CellGroup {
       this.cells.sort((a, b) => a.id - b.id);
       cell.cellGroup = this;
     }
-  }
-
-  newestCell() {
-    return this.cells[this.cells.length - 1];
   }
 
   calculateMinimumHeight() {
@@ -51,7 +43,11 @@ export class CellGroup {
   }
 
   clone(): CellGroup {
-    const clone = new CellGroup(this.id, this.useDefaultSpacing, this.left, this.top, this.width, this.height);
+    const clone = new CellGroup(this.id, this.useDefaultSpacing);
+    clone.left = this.left;
+    clone.top = this.top;
+    clone.width = this.width;
+    clone.height = this.height;
     for (const cell of this.cells) {
       cell.cellGroup = clone;
       clone.cells.push(cell);
@@ -63,11 +59,8 @@ export class CellGroup {
     return {
       id: this.id,
       cells: this.cells.map(cell => ({ id: cell.id, column: cell.column })),
-      useDefaultSpacing: this.useDefaultSpacing,
-      left: this.left,
-      top: this.top,
-      width: this.width,
-      height: this.height
-    }
+      useDefaultSpacing: this.useDefaultSpacing
+    };
   }
+
 }

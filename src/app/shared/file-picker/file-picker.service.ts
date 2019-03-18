@@ -29,20 +29,17 @@ export class FilePickerService {
   readFileAsJson<T>(): Observable<T> {
     return this._fileSelection.asObservable()
       .pipe(
-        take(1),
         switchMap(file => {
           if (file) {
             const fileReader = new FileReader();
             const fileReaderResultObservable = fromEvent(fileReader, 'load')
-              .pipe(
-                take(1),
-                map(() => JSON.parse(fileReader.result as string) as T)
-              );
+              .pipe(map(() => JSON.parse(fileReader.result as string) as T));
             fileReader.readAsText(file);
             return fileReaderResultObservable;
           }
           return of(null);
-        })
+        }),
+        take(1)
       );
   }
 }

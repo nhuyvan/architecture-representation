@@ -12,19 +12,19 @@ import { ColumnLayoutChangeService } from '../../services/column-layout-change.s
 })
 export class CellGroupComponent implements OnChanges, OnDestroy {
 
+  private static _marginLeft = 0;
+  private static _cellWidth = 0;
   @Input()
   cellGroup: CellGroup;
+
   borderLeft = 0;
   borderTop = 0;
   borderWidth = 0;
   borderHeight = 0;
-
   cells: Cell[] = [];
 
-  private static readonly _DEFAULT_CELL_HEIGHT = 50;
   private _cellContainer: SVGGElement;
-  private _marginLeft = 0;
-  private _cellWidth = 0;
+
 
   constructor(
     @Host() host: ElementRef<SVGGElement>,
@@ -35,45 +35,35 @@ export class CellGroupComponent implements OnChanges, OnDestroy {
 
   ngOnChanges() {
     if (this.cellGroup) {
-      if (this._cellWidth === 0)
+      if (CellGroupComponent._cellWidth === 0)
         this._calculateCellMarginLeftAndWidth();
 
       if (this.cellGroup.size() > 0) {
-        const newestCell = this.cellGroup.newestCell();
-        if (newestCell.height === 0 || newestCell.width === 0) {
-          newestCell.width = this._cellWidth;
-          newestCell.height = CellGroupComponent._DEFAULT_CELL_HEIGHT;
-          newestCell.left = this.cellGroup.left + this._marginLeft;
-        }
-        this.borderLeft = this.cellGroup.left + this._marginLeft / 2;
+        this.borderLeft = this.cellGroup.left + CellGroupComponent._marginLeft / 2;
         this.borderTop = this.cellGroup.top;
-        this.borderWidth = this.cellGroup.width - this._marginLeft;
+        this.borderWidth = this.cellGroup.width - CellGroupComponent._marginLeft;
         this.borderHeight = this.cellGroup.height;
 
         this._centerCellsInColumn();
         this._columnLayoutChange.notify(this.cellGroup.cells[0].column, ColumnLayoutChangeType.CELL_ADDED, null);
-      }
-      else if (this._cellContainer.parentElement)
+      } else if (this._cellContainer.parentElement)
         this._cellContainer.parentElement.removeChild(this._cellContainer);
     }
   }
 
-  ngOnDestroy() {
-    if (this._cellContainer && this._cellContainer.parentElement)
-      this._cellContainer.parentElement.removeChild(this._cellContainer);
-  }
-
   private _calculateCellMarginLeftAndWidth() {
-    this._marginLeft = this.cellGroup.width * 5 / 100;
-    this._cellWidth = this.cellGroup.width * 90 / 100;
+    CellGroupComponent._marginLeft = this.cellGroup.width * 5 / 100;
+    CellGroupComponent._cellWidth = this.cellGroup.width * 90 / 100;
   }
 
   private _centerCellsInColumn() {
     const spacingBetweenCells = this._calculateSpacingBetweenCells();
     let topOfCurrentCell = spacingBetweenCells + this.cellGroup.top;
-    for (let i = 0; i < this.cellGroup.cells.length; i++) {
-      const cell = this.cellGroup.cells[i];
+    for (const cell of this.cellGroup.cells) {
       cell.top = topOfCurrentCell;
+      cell.left = this.cellGroup.left + CellGroupComponent._marginLeft;
+      if (cell.width === 0)
+        cell.width = CellGroupComponent._cellWidth;
       topOfCurrentCell = Math.max(this.cellGroup.top, topOfCurrentCell + cell.height + spacingBetweenCells);
     }
     this.cells = [...this.cellGroup.cells];
@@ -85,6 +75,11 @@ export class CellGroupComponent implements OnChanges, OnDestroy {
     const totalHeightOfAllCells = this.cellGroup.cells.reduce((sum, cell) => sum + cell.height, 0);
     const remainingHeight = this.cellGroup.height - totalHeightOfAllCells;
     return Math.max(this.cellGroup.defaultSpacingBetweenCells(), remainingHeight / (this.cellGroup.size() + 1));
+  }
+
+  ngOnDestroy() {
+    if (this._cellContainer && this._cellContainer.parentElement)
+      this._cellContainer.parentElement.removeChild(this._cellContainer);
   }
 
 }

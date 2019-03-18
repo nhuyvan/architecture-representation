@@ -16,6 +16,8 @@ import { ColumnLayoutChangeService } from '../../services/column-layout-change.s
 })
 export class ColumnComponent implements OnChanges, OnInit {
 
+  private static readonly _MINIMUM_SPACING_BETWEEN_GROUPS = 10;
+
   @Input()
   width: number;
 
@@ -31,7 +33,6 @@ export class ColumnComponent implements OnChanges, OnInit {
   @Output()
   cellClicked = new EventEmitter<CellSelectionEvent>();
 
-  private static readonly _MINIMUM_SPACING_BETWEEN_GROUPS = 10;
   private _defaultCellGroup: CellGroup;
 
   constructor(private _layoutChange: ColumnLayoutChangeService) {
@@ -74,7 +75,10 @@ export class ColumnComponent implements OnChanges, OnInit {
     if (this._defaultCellGroup.size() === 0)
       return Math.max(ColumnComponent._MINIMUM_SPACING_BETWEEN_GROUPS, remainingHeight / this.cellGroups.length);
     // For "n" items, there are "n + 1" spacings between them
-    return Math.max(ColumnComponent._MINIMUM_SPACING_BETWEEN_GROUPS, remainingHeight / (this.cellGroups.length + this._defaultCellGroup.size() + 1));
+    return Math.max(
+      ColumnComponent._MINIMUM_SPACING_BETWEEN_GROUPS,
+      remainingHeight / (this.cellGroups.length + this._defaultCellGroup.size() + 1)
+    );
   }
 
   private _calculateTotalHeightOfNonDefaultGroups() {
