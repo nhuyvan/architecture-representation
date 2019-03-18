@@ -7,7 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';
 import { DatePipe } from '@angular/common';
-import { filter } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 
 import { MatricesComponent } from './views/matrices/matrices.component';
 import { Link } from './models/Link';
@@ -447,7 +447,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _importGraphModel() {
     this._filePicker.open()
       .readFileAsJson<GraphModel>()
-      .pipe(filter(graphModel => graphModel !== null))
+      .pipe(
+        filter(graphModel => graphModel !== null),
+        map(graphModel => 'version' in graphModel ? graphModel : this._convertGraphModelToNewerVersion(graphModel))
+      )
       // .pipe(catchError(err => { console.log(err); return of(null); })) TODO: Show error dialog
       .subscribe({
         next: graphModel => {
@@ -459,6 +462,31 @@ export class GraphComponent implements AfterViewInit, OnInit {
           this.modelChanged.emit(graphModel);
         }
       });
+  }
+
+  private _convertGraphModelToNewerVersion(graphModel: GraphModel) {
+    for (const cellGraphModels of Object.values(graphModel.columns))
+      for (const cellGraphModel of cellGraphModels) {
+        delete cellGraphModel['top'];
+        delete cellGraphModel['left'];
+        delete cellGraphModel['width'];
+        delete cellGraphModel['height'];
+      }
+    for (const groupGraphModels of Object.values(graphModel.groups))
+      for (const group of groupGraphModels) {
+        delete group['top'];
+        delete group['left'];
+        delete group['width'];
+        delete group['height'];
+      }
+    graphModel.links = graphModel.links.reduce((accumulator, link: any) => {
+      accumulator = accumulator.concat(
+        link.targets.map(e => ({ ...e, sourceId: link.sourceId, sourceColumn: link.sourceColumn }))
+      );
+      return accumulator;
+    }, []);
+    graphModel.version = GraphComponent._MODEL_VERSION;
+    return graphModel;
   }
 
   private _constructColumnsFromGraphModel(graphModel: GraphModel) {
