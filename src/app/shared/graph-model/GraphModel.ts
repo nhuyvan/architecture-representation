@@ -16,6 +16,7 @@ export interface GraphModel {
   angle: string;
   strength: string;
   q: number[];
+  version: string;
 }
 
 export interface CellGraphModel {

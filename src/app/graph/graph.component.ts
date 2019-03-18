@@ -38,6 +38,8 @@ import { GraphModelChangeType, GraphModelChange } from './models/GraphModelChang
 })
 export class GraphComponent implements AfterViewInit, OnInit {
 
+  private static readonly _MODEL_VERSION = '2.0';
+
   @Output()
   modelChanged = new EventEmitter<GraphModel>();
 
@@ -431,7 +433,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
         ),
         angle: this._computeAngle(matrices.q, matrices.r),
         strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
-        q: matrices.q.toArray() as number[]
+        q: matrices.q.toArray() as number[],
+        version: GraphComponent._MODEL_VERSION
       };
     return {
       attributes: attributes ? attributes.reduce((container, attr) => {
