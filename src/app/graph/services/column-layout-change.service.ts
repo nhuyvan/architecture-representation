@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
+
 import { ColumnLayoutChange, ColumnLayoutChangeType } from '../models/ColumnLayoutChange';
-import { ColumnId } from '../models/Column';
 import { Cell } from '../models/Cell';
 
 @Injectable({
@@ -13,8 +13,8 @@ export class ColumnLayoutChangeService {
 
   constructor() { }
 
-  notify(columnId: ColumnId, type: ColumnLayoutChangeType, trigger: Cell) {
-    this._columnLayoutChanged.next({ column: columnId, type, trigger });
+  notify(type: ColumnLayoutChangeType, trigger: Cell) {
+    this._columnLayoutChanged.next({ type, trigger });
   }
 
   observe(): Observable<ColumnLayoutChange> {

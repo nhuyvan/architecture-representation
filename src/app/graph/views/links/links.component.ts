@@ -1,4 +1,6 @@
-import { Component, ViewChild, ElementRef, Input, OnChanges, ViewEncapsulation, Output, EventEmitter, AfterViewInit, SimpleChanges } from '@angular/core';
+import {
+  Component, ViewChild, ElementRef, Input, OnChanges, ViewEncapsulation, Output, EventEmitter, AfterViewInit, SimpleChanges
+} from '@angular/core';
 
 import { TooltipService } from '@shared/tooltip';
 import { createSvgElement } from '../../utils';

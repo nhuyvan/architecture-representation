@@ -31,8 +31,7 @@ export class TextEditorComponent {
       this._input.nativeElement.style.left = left + cell.left + 2 + 'px';
       // 100 is column header height
       this._input.nativeElement.style.top = (cell.top - scrollTop + 3.5 + 100 + top) + 'px';
-    }
-    else {
+    } else {
       this._input.nativeElement.style.top = (cell.top + 4) + 'px';
       this._input.nativeElement.style.left = cell.left + 2 + 'px';
     }
@@ -69,8 +68,7 @@ export class TextEditorComponent {
       selection.removeAllRanges();
       selection.addRange(range);
       (this._input.nativeElement.firstElementChild as HTMLDivElement).focus();
-    }
-    else if ('createTextRange' in document.body) {
+    } else if ('createTextRange' in document.body) {
       // range = document.body['createTextRange']();
       // range.moveToElementText(div);
       // range.select();

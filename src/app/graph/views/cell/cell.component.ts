@@ -15,8 +15,14 @@ import { GraphModelChangeType } from '../../models/GraphModelChangeType';
 })
 export class CellComponent implements AfterViewInit {
 
+  private static _indexToBreakTextAt = -1;
+  private static readonly _PADDING_LEFT_RIGHT = 10;
+  private static readonly _PADDING_TOP_BOTTOM = 10;
+
   @Input()
   cell: Cell;
+
+  height = 0;
 
   @ViewChild('cellElement')
   private _cellElementRef: ElementRef<SVGGElement>;
@@ -30,7 +36,33 @@ export class CellComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.cell.domInstance = this._cellElementRef.nativeElement;
+    this.height = this.cell.height;
     (this._cellElementRef.nativeElement as any).__cell__ = this.cell;
+    if (CellComponent._indexToBreakTextAt === -1)
+      CellComponent._indexToBreakTextAt = this._findIndexToBreakTextAt();
+    if (CellComponent._indexToBreakTextAt < this.cell.text.length)
+      setTimeout(() => {
+        // Only get the larger height
+        this.height = Math.max(this.cell.domInstance.querySelector('.cell__text__container').scrollHeight, this.height);
+        this.cell.height = this.height;
+        this._columnLayoutChange.notify(ColumnLayoutChangeType.CELL_HEIGHT_INCREASED, this.cell);
+      }, 0);
+  }
+
+  private _findIndexToBreakTextAt() {
+    let buffer = '';
+    const textElement = this.cell.domInstance.querySelector('.cell__text__container') as HTMLDivElement;
+    textElement.textContent = '';
+    while (true) {
+      buffer += 'a';
+      textElement.textContent = buffer;
+      // padding 5 pixels on each side
+      if (textElement.scrollWidth - CellComponent._PADDING_LEFT_RIGHT >= this.cell.width) {
+        // Restore to original text;
+        textElement.textContent = this.cell.text;
+        return buffer.length - 1;
+      }
+    }
   }
 
   showEditorToAddWeightForQualityCell(isCell: boolean, event: MouseEvent) {
@@ -68,9 +100,9 @@ export class CellComponent implements AfterViewInit {
       this._addTextToCellBeingEdited(payload.text, cellBeingEdited);
       const heightDifference = payload.textContainerHeight - cellBeingEdited.height;
       if (heightDifference !== 0) {
-        cellBeingEdited.height = Math.max(payload.textContainerHeight + 10, 50); // 10 = padding top and bottom
+        cellBeingEdited.height = Math.max(payload.textContainerHeight + CellComponent._PADDING_TOP_BOTTOM, 50);
+        this.height = cellBeingEdited.height;
         this._columnLayoutChange.notify(
-          cellBeingEdited.column,
           heightDifference < 0 ? ColumnLayoutChangeType.CELL_HEIGHT_DECREASED : ColumnLayoutChangeType.CELL_HEIGHT_INCREASED,
           cellBeingEdited
         );

@@ -8,24 +8,26 @@
     <rect x='0'
           y='0'
           [attr.width]='cell.width'
-          [attr.height]='cell.height'
+          [attr.height]='height'
           (click)='showEditorToAddWeightForQualityCell($event.target.parentElement.hasAttribute("data-cell"), $event)'
           (dblclick)='showTextEditor($event.target.parentElement.hasAttribute("data-cell"), $event)'>
     </rect>
     <foreignObject x='0'
                    y='0'
                    [attr.width]='cell.width'
-                   [attr.height]='cell.height'>
+                   [attr.height]='height'>
         <xhtml:div class='cell__text'
-                   [style.height.px]='cell.height'>
-            {{cell.text}}
+                   [style.height.px]='height'>
+            <xhtml:div class='cell__text__container'>
+                {{cell.text}}
+            </xhtml:div>
         </xhtml:div>
     </foreignObject>
     <foreignObject *ngIf='cell.column === "quality"'
                    x='0'
                    y='0'
                    [attr.width]='cell.width'
-                   [attr.height]='cell.height / 4'>
+                   [attr.height]='height / 4'>
         <xhtml:span class='cell__weight'>{{cell.weight}}</xhtml:span>
     </foreignObject>
 </svg:g>

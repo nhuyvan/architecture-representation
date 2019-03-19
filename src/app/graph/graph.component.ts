@@ -521,15 +521,16 @@ export class GraphComponent implements AfterViewInit, OnInit {
     switch (layoutChange.type) {
       case ColumnLayoutChangeType.CELL_ADDED:
       case ColumnLayoutChangeType.CELL_HEIGHT_INCREASED:
-        const cells = this.columns[layoutChange.column];
-        if (layoutChange.type === ColumnLayoutChangeType.CELL_ADDED) {
+        const cells = this.columns[layoutChange.trigger.column];
+        if (layoutChange.type === ColumnLayoutChangeType.CELL_ADDED)
           this._expandCanvasIfCellOverflowsColumn(cells[cells.length - 1]);
-        }
-        this._notifyChanges(layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_INCREASED ? layoutChange.column : null);
+        this._notifyChanges(
+          layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_INCREASED ? layoutChange.trigger.column : null
+        );
         break;
       case ColumnLayoutChangeType.CELL_HEIGHT_DECREASED:
         this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
-        this._notifyChanges(layoutChange.column);
+        this._notifyChanges(layoutChange.trigger.column);
         break;
     }
     this.selectedCells = this.selectedCells.filter(selected => selected !== layoutChange.trigger);

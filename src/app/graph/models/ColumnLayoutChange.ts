@@ -2,7 +2,6 @@ import { Cell } from './Cell';
 import { ColumnId } from './Column';
 
 export interface ColumnLayoutChange {
-  column: ColumnId;
   type: ColumnLayoutChangeType;
   trigger: Cell;
 }

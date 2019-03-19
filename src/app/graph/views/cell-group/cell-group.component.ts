@@ -45,7 +45,7 @@ export class CellGroupComponent implements OnChanges, OnDestroy {
         this.borderHeight = this.cellGroup.height;
 
         this._centerCellsInColumn();
-        this._columnLayoutChange.notify(this.cellGroup.cells[0].column, ColumnLayoutChangeType.CELL_ADDED, null);
+        this._columnLayoutChange.notify(ColumnLayoutChangeType.CELL_ADDED, this.cellGroup.cells[this.cellGroup.size() - 1]);
       } else if (this._cellContainer.parentElement)
         this._cellContainer.parentElement.removeChild(this._cellContainer);
     }
