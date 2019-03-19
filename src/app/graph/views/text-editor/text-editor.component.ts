@@ -37,11 +37,7 @@ export class TextEditorComponent {
     }
     this._input.nativeElement.style.width = cell.width - 4 + 'px';
     this._input.nativeElement.style.height = cell.height - 7 + 'px';
-    this._input.nativeElement.style.whiteSpace = 'pre';
-    this._input.nativeElement.style.textAlign = 'center';
-    this._input.nativeElement.style.display = 'flex';
-    this._input.nativeElement.style.justifyContent = 'center';
-    this._input.nativeElement.style.alignItems = 'center';
+
   }
 
   moveIntoViewIfOverflowsOffscreen(event: KeyboardEvent) {
