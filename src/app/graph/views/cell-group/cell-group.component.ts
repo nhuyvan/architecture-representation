@@ -44,7 +44,7 @@ export class CellGroupComponent implements OnChanges, OnDestroy {
         this.borderWidth = this.cellGroup.width - CellGroupComponent._marginLeft;
         this.borderHeight = this.cellGroup.height;
 
-        this._centerCellsInColumn();
+        this._centerCellsInVertically();
         this._columnLayoutChange.notify(ColumnLayoutChangeType.CELL_ADDED, this.cellGroup.cells[this.cellGroup.size() - 1]);
       } else if (this._cellContainer.parentElement)
         this._cellContainer.parentElement.removeChild(this._cellContainer);
@@ -56,7 +56,7 @@ export class CellGroupComponent implements OnChanges, OnDestroy {
     CellGroupComponent._cellWidth = this.cellGroup.width * 90 / 100;
   }
 
-  private _centerCellsInColumn() {
+  private _centerCellsInVertically() {
     const spacingBetweenCells = this._calculateSpacingBetweenCells();
     let topOfCurrentCell = spacingBetweenCells + this.cellGroup.top;
     for (const cell of this.cellGroup.cells) {
