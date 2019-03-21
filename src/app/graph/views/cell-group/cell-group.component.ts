@@ -1,4 +1,4 @@
-import { Component, Input, Host, ElementRef, OnChanges, OnDestroy } from '@angular/core';
+import { Component, Input, Host, ElementRef, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 
 import { CellGroup } from '../../models/CellGroup';
 import { Cell } from '../../models/Cell';
@@ -33,9 +33,9 @@ export class CellGroupComponent implements OnChanges, OnDestroy {
     this._cellContainer = host.nativeElement;
   }
 
-  ngOnChanges() {
+  ngOnChanges(changes: SimpleChanges) {
     if (this.cellGroup) {
-      if (CellGroupComponent._cellWidth === 0)
+      if (!changes.cellGroup.previousValue || changes.cellGroup.previousValue.width !== this.cellGroup.width)
         this._calculateCellMarginLeftAndWidth();
 
       if (this.cellGroup.size() > 0) {
@@ -62,8 +62,7 @@ export class CellGroupComponent implements OnChanges, OnDestroy {
     for (const cell of this.cellGroup.cells) {
       cell.top = topOfCurrentCell;
       cell.left = this.cellGroup.left + CellGroupComponent._marginLeft;
-      if (cell.width === 0)
-        cell.width = CellGroupComponent._cellWidth;
+      cell.width = CellGroupComponent._cellWidth;
       topOfCurrentCell = Math.max(this.cellGroup.top, topOfCurrentCell + cell.height + spacingBetweenCells);
     }
     this.cells = [...this.cellGroup.cells];

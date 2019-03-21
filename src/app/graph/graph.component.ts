@@ -24,6 +24,7 @@ import { Attribute, AttributeEditorComponent } from '@shared/attribute-editor';
 import { FilePickerService } from '@shared/file-picker';
 import { GraphModelChangeService } from './services/graph-model-change.service';
 import { GraphModelChangeType, GraphModelChange } from './models/GraphModelChangeType';
+import { WindowResizeWatcherService } from './services/window-resize-watcher.service';
 
 @Component({
   selector: 'mapper-graph',
@@ -76,23 +77,28 @@ export class GraphComponent implements AfterViewInit, OnInit {
     @Host() private readonly _hostElement: ElementRef<HTMLElement>,
     private _matDialog: MatDialog,
     private _filePicker: FilePickerService,
-    private _graphModeChange: GraphModelChangeService
+    private _graphModeChange: GraphModelChangeService,
+    private _windowResizeWatcher: WindowResizeWatcherService
   ) {
   }
 
   ngAfterViewInit() {
     // ExpressionChangedAfterItHasBeenCheckedError avoidance because this is ngAfterViewInit
     setTimeout(() => {
-      this._canvasContainer = this._hostElement.nativeElement.firstElementChild as SVGSVGElement;
-      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
-      // 12.5% each
-      this.spacingBetweenColumns = this._canvasContainerRect.width * 12.5 / 100;
-      // 25% each
-      this.columnWidth = this._canvasContainerRect.width * 25 / 100;
-      this.columnHeight = this._canvasContainerRect.height - this.headerHeight;
-      this._canvasInitialHeight = this.columnHeight;
+      this._doLayout();
       this._changeDetector.markForCheck();
     }, 1000);
+  }
+
+  private _doLayout() {
+    this._canvasContainer = this._hostElement.nativeElement.firstElementChild as SVGSVGElement;
+    this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
+    // 12.5% each
+    this.spacingBetweenColumns = this._canvasContainerRect.width * 12.5 / 100;
+    // 25% each
+    this.columnWidth = this._canvasContainerRect.width * 25 / 100;
+    this.columnHeight = this._canvasContainerRect.height - this.headerHeight;
+    this._canvasInitialHeight = this.columnHeight;
   }
 
   ngOnInit() {
@@ -109,6 +115,17 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this._commandService.observe()
       .subscribe({
         next: (command: Command) => this._onCommandSelected(command)
+      });
+
+    this._windowResizeWatcher.observe()
+      .subscribe({
+        next: () => {
+          this._doLayout();
+          this._notifyChanges('element');
+          this._notifyChanges('property');
+          this._notifyChanges('quality');
+          this._changeDetector.detectChanges();
+        }
       });
   }
 

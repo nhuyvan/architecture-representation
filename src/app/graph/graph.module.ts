@@ -15,7 +15,9 @@ import { ColumnHeaderComponent } from './views/column-header/column-header.compo
 import { MatrixEditorComponent } from './views/matrix-editor/matrix-editor.component';
 
 @NgModule({
-  declarations: [GraphComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent, CellComponent, CellGroupComponent, MatricesComponent, ColumnHeaderComponent, MatrixEditorComponent],
+  declarations: [
+    GraphComponent, ColumnComponent, LinksComponent, HighlighterDirective, TextEditorComponent, ColorPickerComponent,
+    CellComponent, CellGroupComponent, MatricesComponent, ColumnHeaderComponent, MatrixEditorComponent],
   imports: [
     CommonModule,
     SharedModule
