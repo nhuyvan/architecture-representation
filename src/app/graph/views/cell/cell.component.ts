@@ -50,19 +50,18 @@ export class CellComponent implements AfterViewInit {
   }
 
   private _findIndexToBreakTextAt() {
-    let buffer = '';
-    const textElement = this.cell.domInstance.querySelector('.cell__text__container') as HTMLDivElement;
+    let longText = '';
+    const textElement = this.cell.domInstance.querySelector('.cell__text__container')
+      .cloneNode(true) as HTMLDivElement;
+    textElement.style.position = 'fixed';
     textElement.textContent = '';
-    while (true) {
-      buffer += 'a';
-      textElement.textContent = buffer;
-      // padding 5 pixels on each side
-      if (textElement.scrollWidth - CellComponent._PADDING_LEFT_RIGHT >= this.cell.width) {
-        // Restore to original text;
-        textElement.textContent = this.cell.text;
-        return buffer.length - 1;
-      }
+    document.body.appendChild(textElement);
+    while (textElement.scrollWidth - CellComponent._PADDING_LEFT_RIGHT < this.cell.width) {
+      longText += 'a';
+      textElement.textContent = longText;
     }
+    document.body.removeChild(textElement);
+    return longText.length - 1;
   }
 
   showEditorToAddWeightForQualityCell(isCell: boolean, event: MouseEvent) {
