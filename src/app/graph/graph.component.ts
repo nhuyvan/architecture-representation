@@ -231,7 +231,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
   }
 
   private _removeNonDefaultCellGroupIfEmpty(cellGroup: CellGroup) {
-    if (this.cellGroups.element.length > 1 && cellGroup.size() === 0)
+    if (cellGroup.useDefaultSpacing && cellGroup.size() === 0)
       this.cellGroups.element = this.cellGroups.element.filter(group => group !== cellGroup)
         .map((group, index) => {
           group.id = index;
