@@ -336,31 +336,33 @@ export class GraphComponent implements AfterViewInit, OnInit {
           this._Dp.set([link.target.id, link.source.id], -1);
     });
     this._showMatrixEditor('Dp', this._Dp)
-      .subscribe(resultingMatrix => {
-        this._Dp = resultingMatrix;
-        this._Dp.forEach((entry, index: any, Dp) => {
-          if (entry === -1)
-            Dp.set(index, 0);
-        });
+      .subscribe({
+        next: resultingMatrix => {
+          this._Dp = resultingMatrix;
+          this._Dp.forEach((entry, index: any, Dp) => {
+            if (entry === -1)
+              Dp.set(index, 0);
+          });
+        }
       });
   }
 
   private _editDqMatrix() {
     this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
     this._showMatrixEditor('Dq', this._Dq)
-      .subscribe(updatedMatrix => this._Dq = updatedMatrix);
+      .subscribe({
+        next: updatedMatrix => this._Dq = updatedMatrix
+      });
   }
 
   private _showMatrixEditor(matrixName: string, inputMatrix: Matrix): Observable<Matrix> {
     this._unselectAllSelectedComponents();
     this._changeDetector.detectChanges();
-    return this._matDialog.open(
-      MatrixEditorComponent,
-      {
-        data: { matrixName, matrix: inputMatrix },
-        disableClose: true,
-        autoFocus: false
-      })
+    return this._matDialog.open(MatrixEditorComponent, {
+      data: { matrixName, matrix: inputMatrix },
+      disableClose: true,
+      autoFocus: false
+    })
       .afterClosed();
   }
 
@@ -374,13 +376,19 @@ export class GraphComponent implements AfterViewInit, OnInit {
     const initialAttributes = [];
     if (!this._graphModel || !this._graphModel.attributes['Graph name'])
       initialAttributes.push(
-        { name: 'Graph name', value: '' },
-        { name: 'Date created', value: new DatePipe('en-US').transform(new Date(), 'MM/dd/yyyy, HH:mm:ss zzzz') }
+        { name: 'Graph name', value: '', readonly: true },
+        { name: 'Date created', value: new DatePipe('en-US').transform(new Date(), 'MM/dd/yyyy, HH:mm:ss zzzz'), readonly: true }
       );
     else
       initialAttributes.push(
         ...Object.entries(this._graphModel.attributes)
-          .map(([attrName, attrValue]) => ({ name: attrName, value: attrValue }))
+          .map(([attrName, attrValue]) => {
+            return {
+              name: attrName,
+              value: attrValue,
+              readonly: attrName === 'Graph name' || attrName === 'Date created'
+            };
+          })
           .sort((a, b) => {
             if (a.name === 'Graph name')
               return -1;
@@ -398,14 +406,16 @@ export class GraphComponent implements AfterViewInit, OnInit {
       autoFocus: false
     })
       .afterClosed()
-      .subscribe(attributes => {
-        if (attributes.length > 0) {
-          this._graphModel = this._constructGraphModel(true, attributes);
-          const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          download(`${this._graphModel.attributes['Graph name'] || 'graph-model'}.json`, url);
-          URL.revokeObjectURL(url);
-          this.modelChanged.emit(this._graphModel);
+      .subscribe({
+        next: attributes => {
+          if (attributes.length > 0) {
+            this._graphModel = this._constructGraphModel(true, attributes);
+            const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            download(`${this._graphModel.attributes['Graph name'].trim() || 'graph-model'}.json`, url);
+            URL.revokeObjectURL(url);
+            this.modelChanged.emit(this._graphModel);
+          }
         }
       });
   }

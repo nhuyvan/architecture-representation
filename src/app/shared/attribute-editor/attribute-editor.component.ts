@@ -14,7 +14,7 @@ export class AttributeEditorComponent {
   form: FormGroup;
   attributes: FormArray;
 
-  constructor(@Inject(MAT_DIALOG_DATA) initialAttributes: Attribute[], private _fb: FormBuilder) {
+  constructor(@Inject(MAT_DIALOG_DATA) readonly initialAttributes: Attribute[], private _fb: FormBuilder) {
     this.attributes = _fb.array(initialAttributes.map(attr => this._constructFormGroupForAttribute(attr)));
     this.form = _fb.group({ attributes: this.attributes });
   }
@@ -34,4 +34,7 @@ export class AttributeEditorComponent {
     });
   }
 
+  isAttributeNameReadonly(attributeIndex: number) {
+    return this.initialAttributes[attributeIndex] && this.initialAttributes[attributeIndex].readonly === true;
+  }
 }

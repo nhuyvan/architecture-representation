@@ -3,6 +3,11 @@
     display: block;
 }
 
+.attribute__name input[readonly=true] {
+    color: #bbb;
+    cursor: not-allowed;
+}
+
 .attribute__value {
     margin-left: 10px;
 }

@@ -7,6 +7,7 @@
              class='attribute'>
             <mat-form-field class='attribute__name'>
                 <input matInput
+                       [readonly]='isAttributeNameReadonly(index)'
                        formControlName='name'
                        placeholder='Attribute name'>
             </mat-form-field>
@@ -15,7 +16,8 @@
                        formControlName='value'
                        placeholder='Attribute value'>
             </mat-form-field>
-            <button mat-mini-fab
+            <button *ngIf='!isAttributeNameReadonly(index)'
+                    mat-mini-fab
                     color='accent'
                     class='attribute__delete'
                     tooltip='Remove attribute'
