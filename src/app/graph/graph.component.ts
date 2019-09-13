@@ -216,7 +216,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _addNewCellGroup(cellGroup: CellGroup) {
     const defaultGroup = this.cellGroups.element.pop();
     this.cellGroups.element = this.cellGroups.element.concat(cellGroup, defaultGroup);
-    this._changeDetector.detectChanges();
   }
 
   private _ungroupSelectedCells(addToDefaultGroup = true) {

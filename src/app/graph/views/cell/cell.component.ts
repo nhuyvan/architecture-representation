@@ -24,7 +24,7 @@ export class CellComponent implements AfterViewInit {
 
   height = 0;
 
-  @ViewChild('cellElement')
+  @ViewChild('cellElement', { static: true })
   private _cellElementRef: ElementRef<SVGGElement>;
 
   constructor(

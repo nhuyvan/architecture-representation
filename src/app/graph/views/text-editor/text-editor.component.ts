@@ -10,7 +10,7 @@ import { Cell } from '../../models/Cell';
 })
 export class TextEditorComponent {
 
-  @ViewChild('input')
+  @ViewChild('input', { static: true })
   private _input: ElementRef<HTMLDivElement>;
 
   private _textInput = new Subject<{ text: string, textContainerHeight: number }>();

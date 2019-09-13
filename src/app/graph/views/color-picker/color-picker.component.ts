@@ -18,7 +18,7 @@ export class ColorPickerComponent implements AfterViewInit {
   @Input()
   initialColor = '';
 
-  @ViewChild('colorPicker')
+  @ViewChild('colorPicker', { static: true })
   private _colorPickerRef: ElementRef<HTMLDivElement>;
 
   private _inputBroadcaster = new Subject<string>();

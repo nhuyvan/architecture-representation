@@ -24,7 +24,7 @@ export class TooltipComponent implements AfterViewInit {
 
   showFlag = false;
 
-  @ViewChild('tooltip')
+  @ViewChild('tooltip', { static: true })
   private _tooltipElementRef: ElementRef;
   private _tooltip: HTMLDivElement;
   private _onHide: () => void;

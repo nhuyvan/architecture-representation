@@ -28,7 +28,7 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   @Output()
   linkSelected = new EventEmitter<Link>();
 
-  @ViewChild('links')
+  @ViewChild('links', { static: true })
   private _linkContainerRef: ElementRef<SVGGElement>;
   private _wrapper: SVGGElement;
 
