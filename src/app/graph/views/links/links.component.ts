@@ -55,13 +55,20 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   }
 
   private _renderLinks() {
-    this._linkContainerRef.nativeElement.removeChild(this._wrapper);
-    this._wrapper = createSvgElement('g') as SVGGElement;
-    this.linkTable.forEach(links => {
-      for (const link of links)
-        this._renderLink(link);
-    });
-    this._linkContainerRef.nativeElement.appendChild(this._wrapper);
+    // Wrapped in a setTimeout because the coordinates of each cell
+    // may not have been finished being calculated at this point
+    setTimeout(() => {
+      this._linkContainerRef.nativeElement.removeChild(this._wrapper);
+      // Manually rendering links into the created SVGGElement for performance,
+      // because we add many SVGLineElements to a not-yet-mounted wrapper node
+      // and dump this wrapper into the DOM, only one layout pass is performed
+      this._wrapper = createSvgElement('g') as SVGGElement;
+      this.linkTable.forEach(links => {
+        for (const link of links)
+          this._renderLink(link);
+      });
+      this._linkContainerRef.nativeElement.appendChild(this._wrapper);
+    }, 0);
   }
 
   private _renderLink(link: Link) {
@@ -71,7 +78,6 @@ export class LinksComponent implements OnChanges, AfterViewInit {
     const y1 = source.top + source.height / 2;
     const x2 = target.left;
     const y2 = target.top + target.height / 2;
-
     if (!link.domInstance) {
       const line = createSvgElement('line', { class: 'link' });
       const lineHoverSelectionHandle = createSvgElement('line', { class: 'link-selection-handle' });
