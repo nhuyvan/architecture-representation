@@ -2,7 +2,9 @@
     stroke: #000;
     fill: #fff;
     cursor: pointer;
+    stroke-width: 2px;
     user-select: none;
+
     foreignObject {
         pointer-events: none;
     }
