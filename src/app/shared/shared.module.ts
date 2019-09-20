@@ -12,18 +12,39 @@ import { TooltipDirective } from './tooltip/tooltip.directive';
 import { AttributeEditorComponent } from './attribute-editor/attribute-editor.component';
 import { FilePickerComponent } from './file-picker/file-picker.component';
 import { GraphModelDetailsComponent } from './graph-model/graph-model-details/graph-model-details.component';
+import { AlertComponent } from './alert/alert.component';
 
 @NgModule({
   declarations: [
-    TooltipComponent, TooltipDirective, AttributeEditorComponent, FilePickerComponent, GraphModelDetailsComponent
+    TooltipComponent,
+    TooltipDirective,
+    AttributeEditorComponent,
+    FilePickerComponent,
+    GraphModelDetailsComponent,
+    AlertComponent
   ],
   exports: [
-    MatButtonModule, TooltipDirective, MatDialogModule, MatIconModule, FilePickerComponent, GraphModelDetailsComponent
+    MatButtonModule,
+    TooltipDirective,
+    MatDialogModule,
+    MatIconModule,
+    FilePickerComponent,
+    GraphModelDetailsComponent
   ],
   imports: [
-    CommonModule, MatButtonModule, MatDialogModule, MatIconModule, ReactiveFormsModule, MatInputModule,
-    MatFormFieldModule, FormsModule
+    CommonModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatIconModule,
+    ReactiveFormsModule,
+    MatInputModule,
+    MatFormFieldModule,
+    FormsModule
   ],
-  entryComponents: [TooltipComponent, AttributeEditorComponent]
+  entryComponents: [
+    TooltipComponent,
+    AttributeEditorComponent,
+    AlertComponent
+  ]
 })
 export class SharedModule { }

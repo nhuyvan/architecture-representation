@@ -25,6 +25,7 @@ import { FilePickerService } from '@shared/file-picker';
 import { GraphModelChangeService } from './services/graph-model-change.service';
 import { GraphModelChangeType, GraphModelChange } from './models/GraphModelChangeType';
 import { WindowResizeWatcherService } from './services/window-resize-watcher.service';
+import { AlertService } from '@shared/alert/alert.service';
 
 @Component({
   selector: 'mapper-graph',
@@ -78,7 +79,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
     private _matDialog: MatDialog,
     private _filePicker: FilePickerService,
     private _graphModeChange: GraphModelChangeService,
-    private _windowResizeWatcher: WindowResizeWatcherService
+    private _windowResizeWatcher: WindowResizeWatcherService,
+    private _alertService: AlertService
   ) {
   }
 
@@ -154,6 +156,16 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
   private _onCommandSelected(command: Command) {
     switch (command.action) {
+      case CommandAction.NEW_GRAPH:
+        if (this._graphModel)
+          this._alertService.addMessage('Discard your changes?')
+            .addNegativeButton('Close')
+            .addPositiveButton('OK', () => {
+              this._alertService.close();
+              this._newGraph();
+            })
+            .show();
+        break;
       case CommandAction.TOGGLE_SHOW_ASSOCIATIONS:
         this._toggleAssociationsForSelectedComponents(!this.showAssociations);
         break;
@@ -192,6 +204,23 @@ export class GraphComponent implements AfterViewInit, OnInit {
     }
   }
 
+  private _newGraph() {
+    this.selectedLink = null;
+    this.selectedCells = [];
+    this.showAssociations = false;
+    this._Dp = matrix(zeros(1, 1));
+    this._Dq = matrix(zeros(1, 1));
+    this._graphModel = null;
+    this.linkTable.clear();
+    this.modelChanged.emit(this._graphModel);
+    this.columns.element = [];
+    this.columns.property = [];
+    this.columns.quality = [];
+    this.cellGroups.element = [new CellGroup(0, false)];
+    this.cellGroups.property = [new CellGroup(0, false)];
+    this.cellGroups.quality = [new CellGroup(0, false)];
+    this._notifyChanges();
+  }
 
   private _toggleAssociationsForSelectedComponents(state: boolean) {
     this.showAssociations = state;

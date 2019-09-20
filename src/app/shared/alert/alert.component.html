@@ -1,0 +1,18 @@
+<div mat-dialog-content
+     class='alert'>
+    {{config.message}}
+</div>
+<div mat-dialog-actions>
+    <button *ngIf='
+            config.negativeButtonLabel'
+            mat-button
+            mat-dialog-close
+            (click)='onNegativeButtonClicked()'>
+        {{config.negativeButtonLabel}}
+    </button>
+    <button mat-raised-button
+            color='primary'
+            (click)='onPositiveButtonClicked()'>
+        {{config.positiveButtonLabel}}
+    </button>
+</div>

@@ -13,6 +13,7 @@
             "",
             "kebab-case"
         ],
-        "use-host-property-decorator": false
+        "use-host-property-decorator": false,
+        "no-host-metadata-property": false
     }
 }

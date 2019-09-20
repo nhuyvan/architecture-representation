@@ -1,5 +1,15 @@
 <button mat-mini-fab
         color='basic'
+        tooltip='New graph'
+        position='right'
+        (click)='newGraph()'>
+    <mat-icon>
+        add
+    </mat-icon>
+</button>
+
+<button mat-mini-fab
+        color='basic'
         [tooltip]='showAssociationsSelected ? "Hide associations for selected components" : "Show associations for selected components"'
         position='right'
         (click)='toggleShowAssociations()'>

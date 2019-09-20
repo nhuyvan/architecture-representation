@@ -54,6 +54,9 @@ export class CommandsComponent implements OnInit {
       });
   }
 
+  newGraph() {
+    this._commandService.select(CommandAction.NEW_GRAPH);
+  }
 
   toggleShowAssociations() {
     this._commandService.select(CommandAction.TOGGLE_SHOW_ASSOCIATIONS);
