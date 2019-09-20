@@ -299,7 +299,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
               break;
             case 'property':
               R.set([link.target.id, link.source.id], 1);
-              this._Dq.set([link.target.id, link.source.id], 0);
               break;
           }
         }
@@ -404,8 +403,16 @@ export class GraphComponent implements AfterViewInit, OnInit {
     const initialAttributes = [];
     if (!this._graphModel || !this._graphModel.attributes['Graph name'])
       initialAttributes.push(
-        { name: 'Graph name', value: '', readonly: true },
-        { name: 'Date created', value: new DatePipe('en-US').transform(new Date(), 'MM/dd/yyyy, HH:mm:ss zzzz'), readonly: true }
+        {
+          name: 'Graph name',
+          value: '',
+          readonly: true
+        },
+        {
+          name: 'Date created',
+          value: new DatePipe('en-US').transform(new Date(), 'MM/dd/yyyy, HH:mm:ss zzzz'),
+          readonly: true
+        }
       );
     else
       initialAttributes.push(
@@ -438,7 +445,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
         next: attributes => {
           if (attributes.length > 0) {
             this._graphModel = this._constructGraphModel(true, attributes);
-            const blob = new Blob([JSON.stringify(this._graphModel, null, 2)], { type: 'application/json' });
+            const blob = new Blob([JSON.stringify(this._graphModel, null, 4)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             download(`${this._graphModel.attributes['Graph name'].trim() || 'graph-model'}.json`, url);
             URL.revokeObjectURL(url);
@@ -474,7 +481,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
               links: Array.from(this.linkTable.values())
                 .reduce((container, links) => {
-                  container = container.concat(links.map(link => link.constructLinkGraphModel()));
+                  container.push(...links.map(link => link.constructLinkGraphModel()));
                   return container;
                 }, [] as LinkGraphModel[])
             }
@@ -631,6 +638,9 @@ export class GraphComponent implements AfterViewInit, OnInit {
   onKeyPressed(event: KeyboardEvent) {
     if (event.key === 'Backspace' || event.key === 'Delete') {
       if (this.selectedCells.length > 0) {
+        // Pressing "delete" key on Macs causes the browser to go back to previous page
+        // so disable that behaviour
+        event.preventDefault();
         this._deleteSelectedCells();
         this._ungroupSelectedCells(false);
         this.selectedCells = [];
@@ -641,6 +651,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
           this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
         });
       } else if (this.selectedLink) {
+        event.preventDefault();
         this._enableEntryRepresentingLinkInMatrixDp(this.selectedLink);
         this._deleteLink(this.selectedLink);
         this._notifyChanges(null);

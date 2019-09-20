@@ -142,6 +142,7 @@ export class LinksComponent implements OnChanges, AfterViewInit {
   }
 
   showLinkTooltip(event: MouseEvent, link: Link) {
+    this.hideLinkTooltip();
     this._tooltipService.showAt(event.clientX, event.clientY, String(link.weight), 'bottom');
   }
 
