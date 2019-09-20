@@ -7,7 +7,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';
 import { DatePipe } from '@angular/common';
-import { filter, map } from 'rxjs/operators';
 
 import { MatricesComponent } from './views/matrices/matrices.component';
 import { Link } from './models/Link';
@@ -509,19 +508,25 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _importGraphModel() {
     this._filePicker.open()
       .readFileAsJson<GraphModel>()
-      .pipe(
-        filter(graphModel => graphModel !== null),
-        map(graphModel => 'version' in graphModel ? graphModel : this._convertGraphModelToNewerVersion(graphModel))
-      )
-      // .pipe(catchError(err => { console.log(err); return of(null); })) TODO: Show error dialog
       .subscribe({
         next: graphModel => {
-          this._graphModel = graphModel;
-          this._constructColumnsFromGraphModel(graphModel);
-          this._constructCellGroupsFromGraphModel(graphModel);
-          this._constructLinkTableFromGraphModel(graphModel);
-          this._notifyChanges();
-          this.modelChanged.emit(graphModel);
+          if (graphModel) {
+            this._graphModel = 'version' in graphModel ? graphModel : this._convertGraphModelToNewerVersion(graphModel);
+            this._constructColumnsFromGraphModel(graphModel);
+            this._constructCellGroupsFromGraphModel(graphModel);
+            this._constructLinkTableFromGraphModel(graphModel);
+            this._notifyChanges();
+            this.modelChanged.emit(graphModel);
+          } else {
+            this._alertService.addMessage('Unable to read selected file.')
+              .addNegativeButton('Close')
+              .show();
+          }
+        },
+        error: () => {
+          this._alertService.addMessage('Unable to upload selected file.')
+            .addNegativeButton('Close')
+            .show();
         }
       });
   }

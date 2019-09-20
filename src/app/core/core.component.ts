@@ -42,19 +42,29 @@ export class CoreComponent implements OnInit {
       this._filePicker.clearSelection();
       this._filePicker.open()
         .readFileAsJson()
-        // .pipe(catchError()) TODO: Show error dialog
-        .subscribe(model => {
-          if (model)
-            this._matDialog.open(GraphModelComparatorComponent, {
-              data: {
-                q1: this.currentGraphModel,
-                q2: model
-              },
-              autoFocus: false
-            });
+        .subscribe({
+          next: model => {
+            if (model)
+              this._matDialog.open(GraphModelComparatorComponent, {
+                data: {
+                  q1: this.currentGraphModel,
+                  q2: model
+                },
+                autoFocus: false
+              });
+            else {
+              this._alertService.addMessage('Unable to read selected file.')
+                .addNegativeButton('Close')
+                .show();
+            }
+          },
+          error: () => {
+            this._alertService.addMessage('Unable to upload selected file.')
+              .addNegativeButton('Close')
+              .show();
+          }
         });
     } else {
-      // TODO: Show dialog informing that there is no current model
       this._alertService.addMessage(`There's no active graph model`)
         .addNegativeButton('Close')
         .show();
