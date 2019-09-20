@@ -5,6 +5,7 @@ import { GraphModel } from '@shared/graph-model';
 import { CommandService, CommandAction } from '@shared/command';
 import { FilePickerService } from '@shared/file-picker';
 import { GraphModelComparatorComponent } from 'app/graph-model-comparator/graph-model-comparator.component';
+import { AlertService } from '@shared/alert/alert.service';
 
 @Component({
   selector: 'mapper-core',
@@ -20,7 +21,9 @@ export class CoreComponent implements OnInit {
   constructor(
     private _matDialog: MatDialog,
     private _commandService: CommandService,
-    private _filePicker: FilePickerService) {
+    private _filePicker: FilePickerService,
+    private _alertService: AlertService
+  ) {
   }
 
   ngOnInit() {
@@ -50,9 +53,11 @@ export class CoreComponent implements OnInit {
               autoFocus: false
             });
         });
-    }
-    else {
+    } else {
       // TODO: Show dialog informing that there is no current model
+      this._alertService.addMessage(`There's no active graph model`)
+        .addNegativeButton('Close')
+        .show();
     }
   }
 
