@@ -737,6 +737,11 @@ export class GraphComponent implements AfterViewInit, OnInit {
     // Wait until the new cell was rendered, then start editing the label by dispatching double left click event
     setTimeout(() => {
       this._notifyChanges(columnId);
+      const canvasContainerParent = this._canvasContainer.parentElement;
+      const scrollAmount = canvasContainerParent.scrollHeight - canvasContainerParent.clientHeight;
+      if (scrollAmount > 0)
+        canvasContainerParent.scrollTop = scrollAmount;
+
       newCell.domInstance.querySelector('rect')
         .dispatchEvent(new CustomEvent('dblclick'));
     }, 0);
