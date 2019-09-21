@@ -160,6 +160,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
           this._alertService.addMessage('Discard your changes?')
             .addNegativeButton('Close')
             .addPositiveButton('OK', () => {
+              this.columnHeight = this._canvasInitialHeight;
+              this._canvasContainer.style.height = (this._canvasInitialHeight + this.headerHeight) + 'px';
               this._alertService.close();
               this._newGraph();
             })
@@ -198,6 +200,8 @@ export class GraphComponent implements AfterViewInit, OnInit {
         this._saveGraphModel();
         break;
       case CommandAction.IMPORT_GRAPH_MODEL:
+        this.columnHeight = this._canvasInitialHeight;
+        this._canvasContainer.style.height = (this._canvasInitialHeight + this.headerHeight) + 'px';
         this._importGraphModel();
         break;
     }
