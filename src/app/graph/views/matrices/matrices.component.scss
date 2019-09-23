@@ -17,8 +17,8 @@ h1 {
     border-left: 2px solid #000;
     border-right: 2px solid #000;
     min-width: 5em;
-    text-align: center;
     position: relative;
+
     &::before,
     &::after,
     tbody::before,
@@ -31,16 +31,20 @@ h1 {
         left: 0;
         top: 0;
     }
+
     &::after {
         top: calc(100% - 2px);
     }
+
     td {
         padding: 0 0.7em;
     }
+
     tbody::before {
         left: calc(100% - 10px);
         top: 0;
     }
+
     tbody::after {
         left: calc(100% - 10px);
         top: calc(100% - 2px);

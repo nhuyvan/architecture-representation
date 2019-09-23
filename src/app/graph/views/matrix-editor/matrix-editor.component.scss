@@ -1,7 +1,7 @@
 .matrix {
     display: flex;
     align-items: center;
-    margin: 1em 0;
+    max-height: 98vh;
 }
 
 h1 {
@@ -19,6 +19,7 @@ h1 {
     min-width: 5em;
     text-align: center;
     position: relative;
+
     &::before,
     &::after,
     tbody::before,
@@ -31,13 +32,16 @@ h1 {
         left: 0;
         top: 0;
     }
+
     &::after {
         top: calc(100% - 2px);
     }
+
     td {
         padding: 0 0.5em;
         outline: none;
     }
+
     input {
         width: 30px;
         text-align: center;
@@ -45,14 +49,17 @@ h1 {
         border: 1px solid #ccc;
         padding: 5px;
     }
+
     input[disabled] {
         background-color: #d3d3d3;
         opacity: 0.5;
     }
+
     tbody::before {
         left: calc(100% - 10px);
         top: 0;
     }
+
     tbody::after {
         left: calc(100% - 10px);
         top: calc(100% - 2px);
