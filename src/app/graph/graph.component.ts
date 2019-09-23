@@ -1,8 +1,30 @@
 import {
-  Component, ElementRef, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnInit, Host,
-  ViewEncapsulation, Output, EventEmitter
+  Component,
+  ElementRef,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  HostListener,
+  OnInit,
+  Host,
+  ViewEncapsulation,
+  Output,
+  EventEmitter
 } from '@angular/core';
-import { zeros, Matrix, multiply, subtract, matrix, transpose, divide, hypot, dot, sum, diag, ones } from 'mathjs';
+import {
+  zeros,
+  Matrix,
+  multiply,
+  subtract,
+  matrix,
+  transpose,
+  divide,
+  hypot,
+  dot,
+  sum,
+  diag,
+  ones
+} from 'mathjs';
 import { MatDialog } from '@angular/material/dialog';
 import { svgAsPngUri, download } from 'save-svg-as-png';
 import { Observable } from 'rxjs';

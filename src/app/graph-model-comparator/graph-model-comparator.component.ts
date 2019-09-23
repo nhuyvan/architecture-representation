@@ -30,10 +30,10 @@ export class GraphModelComparatorComponent {
       q2 = resize(q2, [q1.length], 0) as number[];
     else
       q1 = resize(q1, [q2.length], 0) as number[];
-    //<q1, q2> / (|q1||q2|)
     const dotProduct = dot(q1, q2);
     const magnitude = multiply(Math.hypot(...q1), Math.hypot(...q2));
-    const angle = Math.acos(divide(dotProduct, magnitude)) * Math.PI / 180;
+    // angle = acos(dot(q1, q2) / (magnitude(q1) * magnitude(q2))) * (180 / pi) = 26.36 deg
+    const angle = Math.acos(divide(dotProduct, magnitude)) * (180 / Math.PI);
     return angle.toFixed(2) + ' deg';
   }
 }
