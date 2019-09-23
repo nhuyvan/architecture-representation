@@ -667,6 +667,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
   @HostListener('window:keydown', ['$event'])
   onKeyPressed(event: KeyboardEvent) {
+    if (this.showAssociations) {
+      event.preventDefault();
+      return;
+    }
     if (event.key === 'Backspace' || event.key === 'Delete') {
       if (this.selectedCells.length > 0) {
         // Pressing "delete" key on Macs causes the browser to go back to previous page
