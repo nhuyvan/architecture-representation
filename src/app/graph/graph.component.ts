@@ -91,6 +91,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _Dp = matrix(zeros(1, 1));
   private _Dq = matrix(zeros(1, 1));
   private _graphModel: GraphModel = null;
+  private _isDirty = false;
 
   constructor(
     private _changeDetector: ChangeDetectorRef,
@@ -178,7 +179,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _onCommandSelected(command: Command) {
     switch (command.action) {
       case CommandAction.NEW_GRAPH:
-        if (this._graphModel)
+        if (this._isDirty)
           this._alertService.addMessage('Discard your changes?')
             .addNegativeButton('Close')
             .addPositiveButton('OK', () => {
@@ -222,6 +223,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
         this._saveGraphModel();
         break;
       case CommandAction.IMPORT_GRAPH_MODEL:
+        this._isDirty = true;
         this.columnHeight = this._canvasInitialHeight;
         this._canvasContainer.style.height = (this._canvasInitialHeight + this.headerHeight) + 'px';
         this._importGraphModel();
@@ -244,6 +246,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this.cellGroups.element = [new CellGroup(0, false)];
     this.cellGroups.property = [new CellGroup(0, false)];
     this.cellGroups.quality = [new CellGroup(0, false)];
+    this._isDirty = false;
     this._notifyChanges();
   }
 
@@ -760,6 +763,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
   onCellAdded(columnId: ColumnId) {
     const newCell = this._createNewCell(columnId);
+    this._isDirty = true;
     this.columns[columnId] = this.columns[columnId].concat(newCell);
     this._addToDefaultCellGroup(newCell);
     this.modelChanged.emit(this._constructGraphModel());
@@ -781,7 +785,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
     const defaultCellGroup = this.cellGroups[cell.column].pop();
     defaultCellGroup.addCell(cell);
     this.cellGroups[cell.column].push(defaultCellGroup);
-    // this._changeDetector.detectChanges();
   }
 
   private _createNewCell(columnId: ColumnId): Cell {
