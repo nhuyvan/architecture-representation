@@ -49,7 +49,7 @@ export class TextEditorComponent {
   }
 
   beginEditing(initialText: string) {
-    this._input.nativeElement.firstElementChild.innerHTML = initialText;
+    this._input.nativeElement.firstElementChild.textContent = initialText || ' ';
     this._focus();
   }
 
