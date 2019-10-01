@@ -30,9 +30,9 @@ export class TextEditorComponentRef {
 })
 export class TextEditorService {
 
-  private static readonly _DEFAULT_TEXT = 'Double click to edit';
   private readonly _textEditorPortal = new ComponentPortal<TextEditorComponent>(TextEditorComponent);
   private _textEditor: ComponentRef<TextEditorComponent>;
+
   constructor(
     private _componentFactoryResolver: ComponentFactoryResolver,
     private _injector: Injector,
@@ -51,7 +51,7 @@ export class TextEditorService {
     this._textEditor = emptyOutlet.attachComponentPortal(this._textEditorPortal);
     document.body.appendChild(overlay);
     this._textEditor.instance.snapEditorToCellBoundary(cell);
-    this._textEditor.instance.beginEditing(initialText === TextEditorService._DEFAULT_TEXT ? '' : initialText);
+    this._textEditor.instance.beginEditing(initialText);
     return emptyOutlet;
   }
 }
