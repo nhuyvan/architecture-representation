@@ -772,6 +772,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
         .dispatchEvent(new CustomEvent('dblclick'));
     }, 0);
     this.selectedCells = [];
+    this.selectedLink = null;
   }
 
   private _createNewCell(columnId: ColumnId): Cell {
