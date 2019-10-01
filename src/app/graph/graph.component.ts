@@ -153,6 +153,68 @@ export class GraphComponent implements AfterViewInit, OnInit {
       });
   }
 
+  private _onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {
+    switch (layoutChange.type) {
+      case ColumnLayoutChangeType.CELL_ADDED:
+      case ColumnLayoutChangeType.CELL_HEIGHT_INCREASED:
+        const cells = this.columns[layoutChange.trigger.column];
+        if (layoutChange.type === ColumnLayoutChangeType.CELL_ADDED)
+          this._expandCanvasIfCellOverflowsColumn(cells[cells.length - 1]);
+        this._notifyChanges(
+          layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_INCREASED ? layoutChange.trigger.column : null
+        );
+        break;
+      case ColumnLayoutChangeType.CELL_HEIGHT_DECREASED:
+        this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
+        this._notifyChanges(layoutChange.trigger.column);
+        break;
+    }
+    this.selectedCells = this.selectedCells.filter(selected => selected !== layoutChange.trigger);
+  }
+
+  private _expandCanvasIfCellOverflowsColumn(cell: Cell) {
+    const difference = (cell.top + cell.height) - this.columnHeight;
+    if (difference > 0) {
+      this._canvasContainer.style.height = this._canvasContainerRect.height
+        + difference + 5
+        + this._hostElement.nativeElement.scrollTop
+        + 'px';
+      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
+      this.columnHeight = this._canvasContainerRect.height - this.headerHeight;
+    }
+  }
+
+  private _notifyChanges(column?: ColumnId) {
+    this.linkTable = new Map<Cell, Link[]>(this.linkTable);
+    if (column)
+      this.cellGroups[column] = this.cellGroups[column].map(group => group.clone());
+    this._changeDetector.detectChanges();
+  }
+
+  private _shrinkCanvasIfTooMuchEmptyVerticalSpace() {
+    const largestMinimumColumnHeight = Object.values(this.columns)
+      .map(cells => this._calculateMinimumColumnHeight(cells))
+      .reduce((largest, columnMinimumHeight) => Math.max(largest, columnMinimumHeight), 0);
+
+    const emptyVerticalSpace = this.columnHeight - largestMinimumColumnHeight;
+    // 10 is the padding between the last cell and the canvas bottom border
+    if (emptyVerticalSpace > 10) {
+      const adjustedHeight = Math.max(this.columnHeight - (emptyVerticalSpace - 10), this._canvasInitialHeight);
+      this._canvasContainer.style.height = (adjustedHeight + this.headerHeight) + 'px';
+      this.columnHeight = adjustedHeight;
+      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
+    }
+  }
+
+  private _calculateMinimumColumnHeight(cells: Cell[]) {
+    const minimumSpacingBetweenCells = 5;
+    return this._sumCellHeights(cells) + minimumSpacingBetweenCells * (cells.length + 1);
+  }
+
+  private _sumCellHeights(cells: Cell[]) {
+    return cells.reduce((accumulator, cell) => accumulator + cell.height, 0);
+  }
+
   private _onGraphModelChanged(change: GraphModelChange) {
     switch (change.type) {
       case GraphModelChangeType.QUALITY_WEIGHT_UPDATED:
@@ -169,6 +231,109 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this._graphModel = this._constructGraphModel();
     this.modelChanged.emit(this._graphModel);
     this._filePicker.clearSelection();
+  }
+
+  private _constructGraphModel(forStorage = false, attributes?: Attribute[]): GraphModel {
+    const matrices = this._computeMatrices();
+    if (matrices)
+      return {
+        ...Object.assign(
+          forStorage
+            ?
+            {
+              attributes: attributes.reduce((container, attr) => {
+                container[attr.name] = attr.value;
+                return container;
+              }, {}),
+              columns: Object.entries(this.columns)
+                .reduce((container, [columnName, cells]) => {
+                  container[columnName] = cells.map(cell => cell.constructCellGraphModel());
+                  return container;
+                }, { element: null, property: null, quality: null }),
+
+              groups: Object.entries(this.cellGroups)
+                .reduce((container, [columnName, groups]) => {
+                  container[columnName] = groups.map(group => group.constructGroupGraphModel());
+                  return container;
+                }, { element: null, property: null, quality: null }),
+
+              links: Array.from(this.linkTable.values())
+                .reduce((container, links) => {
+                  container.push(...links.map(link => link.constructLinkGraphModel()));
+                  return container;
+                }, [] as LinkGraphModel[])
+            }
+            :
+            {
+              attributes: (this._graphModel || { attributes: {} }).attributes,
+              columns: null,
+              groups: null,
+              links: null
+            }
+        ),
+        angle: this._computeAngle(matrices.q, matrices.r),
+        strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
+        q: matrices.q.toArray() as number[],
+        version: GraphComponent._MODEL_VERSION
+      };
+    return {
+      attributes: attributes ? attributes.reduce((container, attr) => {
+        container[attr.name] = attr.value;
+        return container;
+      }, {}) : {}
+    } as GraphModel;
+  }
+
+  private _computeMatrices() {
+    try {
+      const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
+      const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
+      this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
+      // Dq has size of RL
+      this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
+      this.linkTable.forEach(links => {
+        for (const link of links) {
+          switch (link.source.column) {
+            case 'element':
+              L.set([link.target.id, link.source.id], 1);
+              this._Dp.set([link.target.id, link.source.id], 0);
+              break;
+            case 'property':
+              R.set([link.target.id, link.source.id], 1);
+              break;
+          }
+        }
+      });
+      const e = matrix(this.columns.element.map(cell => cell.isOn ? 1 : 0));
+      // q = [ R (L – Dp) – Dq ] e
+      const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
+      // r = Wq0 / |Wq0|
+      const totalQualityWeight = sum(this.columns.quality.map(cell => cell.weight));
+      const w = matrix(this.columns.quality.map(cell => cell.weight / totalQualityWeight));
+      const q0 = matrix(ones(q.size()));
+      const W = diag(w);
+      const WTimesq0 = multiply(W, q0);
+      const r = divide(WTimesq0, hypot(WTimesq0 as any)) as Matrix;
+
+      // T = R (L - Dp) – Dq
+      const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
+
+      return { L, Dp: this._Dp, R, Dq: this._Dq, T, r, e, q };
+    } catch {
+      return null;
+    }
+  }
+
+  private _computeAngle(q: Matrix, r: Matrix): string {
+    // A(q,r) = <q,r> /(|q||r|)
+    const angle = Math.acos(dot(q, r) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
+    return angle ? angle.toFixed(2) + ' deg' : '';
+  }
+
+  private _computeStrength(q: Matrix, r: Matrix, e: Matrix): string {
+    // S(q,r) = <q,r> / Transpose(e)e
+    const strength = divide(dot(q, r), multiply(transpose(e), e)) as number;
+    return strength ? strength.toFixed(2) : '';
   }
 
   private _cellTextUpdated(changeEvent: GraphModelChange) {
@@ -270,6 +435,15 @@ export class GraphComponent implements AfterViewInit, OnInit {
     }
   }
 
+  private _removeNonDefaultCellGroupIfEmpty(cellGroup: CellGroup) {
+    if (cellGroup.useDefaultSpacing && cellGroup.size() === 0)
+      this.cellGroups.element = this.cellGroups.element.filter(group => group !== cellGroup)
+        .map((group, index) => {
+          group.id = index;
+          return group;
+        });
+  }
+
   private _addNewCellGroup(cellGroup: CellGroup) {
     const defaultGroup = this.cellGroups.element.pop();
     this.cellGroups.element = this.cellGroups.element.concat(cellGroup, defaultGroup);
@@ -286,15 +460,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this._notifyChanges('element');
   }
 
-  private _removeNonDefaultCellGroupIfEmpty(cellGroup: CellGroup) {
-    if (cellGroup.useDefaultSpacing && cellGroup.size() === 0)
-      this.cellGroups.element = this.cellGroups.element.filter(group => group !== cellGroup)
-        .map((group, index) => {
-          group.id = index;
-          return group;
-        });
-  }
-
   private _showMatrices() {
     const matrices = this._computeMatrices();
     if (matrices)
@@ -309,59 +474,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
         ],
         autoFocus: false
       });
-  }
-
-  private _computeMatrices() {
-    try {
-      const L = zeros(this.columns.property.length, this.columns.element.length) as Matrix;
-      const R = zeros(this.columns.quality.length, this.columns.property.length) as Matrix;
-      this._Dp = this._Dp.resize([this.columns.property.length, this.columns.element.length], 0);
-      // Dq has size of RL
-      this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
-      this.linkTable.forEach(links => {
-        for (const link of links) {
-          switch (link.source.column) {
-            case 'element':
-              L.set([link.target.id, link.source.id], 1);
-              this._Dp.set([link.target.id, link.source.id], 0);
-              break;
-            case 'property':
-              R.set([link.target.id, link.source.id], 1);
-              break;
-          }
-        }
-      });
-      const e = matrix(this.columns.element.map(cell => cell.isOn ? 1 : 0));
-      // q = [ R (L – Dp) – Dq ] e
-      const q = multiply(subtract(multiply(R, subtract(L, this._Dp)), this._Dq), e) as Matrix;
-      // r = Wq0 / |Wq0|
-      const totalQualityWeight = sum(this.columns.quality.map(cell => cell.weight));
-      const w = matrix(this.columns.quality.map(cell => cell.weight / totalQualityWeight));
-      const q0 = matrix(ones(q.size()));
-      const W = diag(w);
-      const WTimesq0 = multiply(W, q0);
-      const r = divide(WTimesq0, hypot(WTimesq0 as any)) as Matrix;
-
-      // T = R (L - Dp) – Dq
-      const T = subtract(multiply(R, subtract(L, this._Dp)), this._Dq) as Matrix;
-
-      return { L, Dp: this._Dp, R, Dq: this._Dq, T, r, e, q };
-    } catch (e) {
-      console.warn(`[GraphComponent -> _computeMatrices] ${e.message}`);
-      return null;
-    }
-  }
-
-  private _computeAngle(q: Matrix, r: Matrix): string {
-    // A(q,r) = <q,r> /(|q||r|)
-    const angle = Math.acos(dot(q, r) / (hypot(q as any) * hypot(r as any))) * 180 / Math.PI;
-    return angle ? angle.toFixed(2) + ' deg' : '';
-  }
-
-  private _computeStrength(q: Matrix, r: Matrix, e: Matrix): string {
-    // S(q,r) = <q,r> / Transpose(e)e
-    const strength = divide(dot(q, r), multiply(transpose(e), e)) as number;
-    return strength ? strength.toFixed(2) : '';
   }
 
   private _turnCellsOnOrOff(onOrOff: boolean) {
@@ -402,14 +514,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
       });
   }
 
-  private _editDqMatrix() {
-    this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
-    this._showMatrixEditor('Dq', this._Dq)
-      .subscribe({
-        next: updatedMatrix => this._Dq = updatedMatrix
-      });
-  }
-
   private _showMatrixEditor(matrixName: string, inputMatrix: Matrix): Observable<Matrix> {
     this._unselectAllSelectedComponents();
     this._changeDetector.detectChanges();
@@ -424,6 +528,14 @@ export class GraphComponent implements AfterViewInit, OnInit {
   private _unselectAllSelectedComponents() {
     this.selectedCells = [];
     this.selectedLink = null;
+  }
+
+  private _editDqMatrix() {
+    this._Dq = this._Dq.resize([this.columns.quality.length, this.columns.element.length], 0);
+    this._showMatrixEditor('Dq', this._Dq)
+      .subscribe({
+        next: updatedMatrix => this._Dq = updatedMatrix
+      });
   }
 
   private _saveGraphModel() {
@@ -483,64 +595,13 @@ export class GraphComponent implements AfterViewInit, OnInit {
       });
   }
 
-  private _constructGraphModel(forStorage = false, attributes?: Attribute[]): GraphModel {
-    const matrices = this._computeMatrices();
-    if (matrices)
-      return {
-        ...Object.assign(
-          forStorage
-            ?
-            {
-              attributes: attributes.reduce((container, attr) => {
-                container[attr.name] = attr.value;
-                return container;
-              }, {}),
-              columns: Object.entries(this.columns)
-                .reduce((container, [columnName, cells]) => {
-                  container[columnName] = cells.map(cell => cell.constructCellGraphModel());
-                  return container;
-                }, { element: null, property: null, quality: null }),
-
-              groups: Object.entries(this.cellGroups)
-                .reduce((container, [columnName, groups]) => {
-                  container[columnName] = groups.map(group => group.constructGroupGraphModel());
-                  return container;
-                }, { element: null, property: null, quality: null }),
-
-              links: Array.from(this.linkTable.values())
-                .reduce((container, links) => {
-                  container.push(...links.map(link => link.constructLinkGraphModel()));
-                  return container;
-                }, [] as LinkGraphModel[])
-            }
-            :
-            {
-              attributes: (this._graphModel || { attributes: {} }).attributes,
-              columns: null,
-              groups: null,
-              links: null
-            }
-        ),
-        angle: this._computeAngle(matrices.q, matrices.r),
-        strength: this._computeStrength(matrices.q, matrices.r, matrices.e),
-        q: matrices.q.toArray() as number[],
-        version: GraphComponent._MODEL_VERSION
-      };
-    return {
-      attributes: attributes ? attributes.reduce((container, attr) => {
-        container[attr.name] = attr.value;
-        return container;
-      }, {}) : {}
-    } as GraphModel;
-  }
-
   private _importGraphModel() {
     this._filePicker.open()
       .readFileAsJson<GraphModel>()
       .subscribe({
         next: graphModel => {
           if (graphModel) {
-            this._graphModel = 'version' in graphModel ? graphModel : this._convertGraphModelToNewerVersion(graphModel);
+            this._graphModel = graphModel;
             this._constructColumnsFromGraphModel(graphModel);
             this._constructCellGroupsFromGraphModel(graphModel);
             this._constructLinkTableFromGraphModel(graphModel);
@@ -558,31 +619,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
             .show();
         }
       });
-  }
-
-  private _convertGraphModelToNewerVersion(graphModel: GraphModel) {
-    for (const cellGraphModels of Object.values(graphModel.columns))
-      for (const cellGraphModel of cellGraphModels) {
-        delete cellGraphModel['top'];
-        delete cellGraphModel['left'];
-        delete cellGraphModel['width'];
-        delete cellGraphModel['height'];
-      }
-    for (const groupGraphModels of Object.values(graphModel.groups))
-      for (const group of groupGraphModels) {
-        delete group['top'];
-        delete group['left'];
-        delete group['width'];
-        delete group['height'];
-      }
-    graphModel.links = graphModel.links.reduce((accumulator, link: any) => {
-      accumulator = accumulator.concat(
-        link.targets.map(e => ({ ...e, sourceId: link.sourceId, sourceColumn: link.sourceColumn }))
-      );
-      return accumulator;
-    }, []);
-    graphModel.version = GraphComponent._MODEL_VERSION;
-    return graphModel;
   }
 
   private _constructColumnsFromGraphModel(graphModel: GraphModel) {
@@ -613,59 +649,22 @@ export class GraphComponent implements AfterViewInit, OnInit {
     }
   }
 
-  private _onColumnLayoutChanged(layoutChange: ColumnLayoutChange) {
-    switch (layoutChange.type) {
-      case ColumnLayoutChangeType.CELL_ADDED:
-      case ColumnLayoutChangeType.CELL_HEIGHT_INCREASED:
-        const cells = this.columns[layoutChange.trigger.column];
-        if (layoutChange.type === ColumnLayoutChangeType.CELL_ADDED)
-          this._expandCanvasIfCellOverflowsColumn(cells[cells.length - 1]);
-        this._notifyChanges(
-          layoutChange.type === ColumnLayoutChangeType.CELL_HEIGHT_INCREASED ? layoutChange.trigger.column : null
-        );
-        break;
-      case ColumnLayoutChangeType.CELL_HEIGHT_DECREASED:
-        this._shrinkCanvasIfTooMuchEmptyVerticalSpace();
-        this._notifyChanges(layoutChange.trigger.column);
-        break;
+  private _addNewLink(source: Cell, target: Cell, weight?: number) {
+    const newLink = new Link(source, target, source.idSelector + '_' + target.idSelector, weight);
+
+    if (!this.linkTable.has(source)) {
+      this.linkTable.set(source, [newLink]);
+      return true;
+    } else if (!this._linkExists(this.linkTable.get(source), newLink)) {
+      this.linkTable.get(source)
+        .push(newLink);
+      return true;
     }
-    this.selectedCells = this.selectedCells.filter(selected => selected !== layoutChange.trigger);
+    return false;
   }
 
-  private _expandCanvasIfCellOverflowsColumn(cell: Cell) {
-    const difference = (cell.top + cell.height) - this.columnHeight;
-    if (difference > 0) {
-      this._canvasContainer.style.height = this._canvasContainerRect.height
-        + difference + 5
-        + this._hostElement.nativeElement.scrollTop
-        + 'px';
-      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
-      this.columnHeight = this._canvasContainerRect.height - this.headerHeight;
-    }
-  }
-
-  private _shrinkCanvasIfTooMuchEmptyVerticalSpace() {
-    const largestMinimumColumnHeight = Object.values(this.columns)
-      .map(cells => this._calculateMinimumColumnHeight(cells))
-      .reduce((largest, columnMinimumHeight) => Math.max(largest, columnMinimumHeight), 0);
-
-    const emptyVerticalSpace = this.columnHeight - largestMinimumColumnHeight;
-    // 10 is the padding between the last cell and the canvas bottom border
-    if (emptyVerticalSpace > 10) {
-      const adjustedHeight = Math.max(this.columnHeight - (emptyVerticalSpace - 10), this._canvasInitialHeight);
-      this._canvasContainer.style.height = (adjustedHeight + this.headerHeight) + 'px';
-      this.columnHeight = adjustedHeight;
-      this._canvasContainerRect = this._canvasContainer.getBoundingClientRect();
-    }
-  }
-
-  private _calculateMinimumColumnHeight(cells: Cell[]) {
-    const minimumSpacingBetweenCells = 5;
-    return this._sumCellHeights(cells) + minimumSpacingBetweenCells * (cells.length + 1);
-  }
-
-  private _sumCellHeights(cells: Cell[]) {
-    return cells.reduce((accumulator, cell) => accumulator + cell.height, 0);
+  private _linkExists(links: Link[], newLink: Link) {
+    return links.some(e => e.source === newLink.source && e.target === newLink.target);
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -716,6 +715,20 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this._adjustLinkSelectorsInLinkTable();
   }
 
+  private _deleteLink(link: Link) {
+    const updatedLinks = this.linkTable.get(link.source)
+      .filter(e => e !== link);
+    if (updatedLinks.length === 0)
+      this.linkTable.delete(link.source);
+    else
+      this.linkTable.set(link.source, updatedLinks);
+    this.selectedLink = null;
+  }
+
+  private _enableEntryRepresentingLinkInMatrixDp(deletedLink: Link) {
+    this._Dp.set([deletedLink.target.id, deletedLink.source.id], 0);
+  }
+
   private _adjustCellIds(affectedColumns: Set<ColumnId>) {
     for (const affectedColumn of affectedColumns) {
       const cells = this.columns[affectedColumn];
@@ -732,27 +745,6 @@ export class GraphComponent implements AfterViewInit, OnInit {
       for (const link of links)
         link.idSelector = link.source.idSelector + '_' + link.target.idSelector;
     });
-  }
-
-  private _deleteLink(link: Link) {
-    const updatedLinks = this.linkTable.get(link.source)
-      .filter(e => e !== link);
-    if (updatedLinks.length === 0)
-      this.linkTable.delete(link.source);
-    else
-      this.linkTable.set(link.source, updatedLinks);
-    this.selectedLink = null;
-  }
-
-  private _enableEntryRepresentingLinkInMatrixDp(deletedLink: Link) {
-    this._Dp.set([deletedLink.target.id, deletedLink.source.id], 0);
-  }
-
-  private _notifyChanges(column?: ColumnId) {
-    this.linkTable = new Map<Cell, Link[]>(this.linkTable);
-    if (column)
-      this.cellGroups[column] = this.cellGroups[column].map(group => group.clone());
-    this._changeDetector.detectChanges();
   }
 
   onLinkSelected(link: Link) {
@@ -779,17 +771,18 @@ export class GraphComponent implements AfterViewInit, OnInit {
       newCell.domInstance.querySelector('rect')
         .dispatchEvent(new CustomEvent('dblclick'));
     }, 0);
+    this.selectedCells = [];
+  }
+
+  private _createNewCell(columnId: ColumnId): Cell {
+    const id = this.columns[columnId].length;
+    return new Cell(id, `${columnId}-cell-${id}`, columnId);
   }
 
   private _addToDefaultCellGroup(cell: Cell) {
     const defaultCellGroup = this.cellGroups[cell.column].pop();
     defaultCellGroup.addCell(cell);
     this.cellGroups[cell.column].push(defaultCellGroup);
-  }
-
-  private _createNewCell(columnId: ColumnId): Cell {
-    const id = this.columns[columnId].length;
-    return new Cell(id, `${columnId}-cell-${id}`, columnId);
   }
 
   onElementCellClicked(selectionEvent: CellSelectionEvent) {
@@ -799,16 +792,18 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this.selectedLink = null;
   }
 
-  onPropertyCellClicked(selectionEvent: CellSelectionEvent) {
-    // Only "element" column can add links to "element" column
-    this._addLinksOrAddToOrRemoveFromSelectedCells('element', selectionEvent);
-    this._activateCellGroupingOrCellUngroupingCommand();
-  }
-
-  onQualityCellClicked(selectionEvent: CellSelectionEvent) {
-    // Only "property" column can add links to "property" column
-    this._addLinksOrAddToOrRemoveFromSelectedCells('property', selectionEvent);
-    this._activateCellGroupingOrCellUngroupingCommand();
+  private _addToOrRemoveFromSelectedCells(selectionEvent: CellSelectionEvent) {
+    switch (selectionEvent.type) {
+      case CellSelectionEventType.UNSELECT:
+        this.selectedCells = this.selectedCells.filter(selectedCell => selectedCell !== selectionEvent.cell);
+        break;
+      case CellSelectionEventType.NEW_SELECTION:
+        this.selectedCells = [selectionEvent.cell];
+        break;
+      case CellSelectionEventType.SELECT:
+        this.selectedCells = this.selectedCells.concat(selectionEvent.cell);
+        break;
+    }
   }
 
   private _activateCellGroupingOrCellUngroupingCommand() {
@@ -826,6 +821,12 @@ export class GraphComponent implements AfterViewInit, OnInit {
       this._commandService.select(CommandAction.ACTIVATE_TURN_ON_CELL);
     else
       this._commandService.select(CommandAction.ACTIVATE_TURN_OFF_CELL);
+  }
+
+  onPropertyCellClicked(selectionEvent: CellSelectionEvent) {
+    // Only "element" column can add links to "element" column
+    this._addLinksOrAddToOrRemoveFromSelectedCells('element', selectionEvent);
+    this._activateCellGroupingOrCellUngroupingCommand();
   }
 
   private _addLinksOrAddToOrRemoveFromSelectedCells(sourceColumn: 'element' | 'property', event: CellSelectionEvent) {
@@ -850,36 +851,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this.selectedLink = null;
   }
 
-  private _addToOrRemoveFromSelectedCells(selectionEvent: CellSelectionEvent) {
-    switch (selectionEvent.type) {
-      case CellSelectionEventType.UNSELECT:
-        this.selectedCells = this.selectedCells.filter(selectedCell => selectedCell !== selectionEvent.cell);
-        break;
-      case CellSelectionEventType.NEW_SELECTION:
-        this.selectedCells = [selectionEvent.cell];
-        break;
-      case CellSelectionEventType.SELECT:
-        this.selectedCells = this.selectedCells.concat(selectionEvent.cell);
-        break;
-    }
-  }
-
-  private _addNewLink(source: Cell, target: Cell, weight?: number) {
-    const newLink = new Link(source, target, source.idSelector + '_' + target.idSelector, weight);
-
-    if (!this.linkTable.has(source)) {
-      this.linkTable.set(source, [newLink]);
-      return true;
-    } else if (!this._linkExists(this.linkTable.get(source), newLink)) {
-      this.linkTable.get(source)
-        .push(newLink);
-      return true;
-    }
-    return false;
-  }
-
-  private _linkExists(links: Link[], newLink: Link) {
-    return links.some(e => e.source === newLink.source && e.target === newLink.target);
+  onQualityCellClicked(selectionEvent: CellSelectionEvent) {
+    // Only "property" column can add links to "property" column
+    this._addLinksOrAddToOrRemoveFromSelectedCells('property', selectionEvent);
+    this._activateCellGroupingOrCellUngroupingCommand();
   }
 
 }
