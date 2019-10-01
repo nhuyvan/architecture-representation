@@ -673,7 +673,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
       event.preventDefault();
       return;
     }
-    if (event.key === 'Backspace' || event.key === 'Delete') {
+    if ((event.key === 'Backspace' && navigator.platform.toLowerCase().includes('mac')) || event.key === 'Delete') {
       if (this.selectedCells.length > 0) {
         // Pressing "delete" key on Macs causes the browser to go back to previous page
         // so disable that behaviour
