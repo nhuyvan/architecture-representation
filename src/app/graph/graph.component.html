@@ -2,7 +2,8 @@
      [selectedLink]='selectedLink'
      [showAssociations]='showAssociations'
      [selectedCells]='selectedCells'
-     [linkTable]='linkTable'>
+     [linkTable]='linkTable'
+     (click)='removeAllSelectedComponents($event)'>
     <g class='headers'>
         <g column-header
            width='{{columnWidth}}'
