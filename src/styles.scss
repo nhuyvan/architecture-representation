@@ -2,20 +2,13 @@
 
 body {
     margin: 0;
-    padding: 0;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-}
+    padding: 0;}
 
-html,
-body {
-    height: 100%;
-}
-
-body {
-    margin: 0;
+mapper {
     font-family: Roboto, "Helvetica Neue", sans-serif;
+    display: block;
+    width: 900px;
+    height: 750px;
 }
 
 .ripple {

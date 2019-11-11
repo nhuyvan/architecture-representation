@@ -1,11 +1,12 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewEncapsulation } from '@angular/core';
 
 import { ColumnId } from '../../models/Column';
 
 @Component({
   selector: 'g[column-header]',
   templateUrl: './column-header.component.html',
-  styleUrls: ['./column-header.component.scss']
+  styleUrls: ['./column-header.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class ColumnHeaderComponent implements OnInit {
 

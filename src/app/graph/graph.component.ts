@@ -68,7 +68,7 @@ export class GraphComponent implements AfterViewInit, OnInit {
 
   columnWidth = 0;
   columnHeight = 0;
-  readonly headerHeight = 100;
+  readonly headerHeight = 80;
   spacingBetweenColumns = 0;
   linkTable = new Map<Cell, Array<Link>>();
   selectedLink: Link;
