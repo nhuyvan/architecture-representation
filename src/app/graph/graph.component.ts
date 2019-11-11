@@ -858,4 +858,10 @@ export class GraphComponent implements AfterViewInit, OnInit {
     this._activateCellGroupingOrCellUngroupingCommand();
   }
 
+  removeAllSelectedComponents(event: MouseEvent) {
+    if ((event.target as SVGElement).tagName.toLowerCase() === 'svg') {
+      this.selectedCells = [];
+      this.selectedLink = null;
+    }
+  }
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { Matrix, matrix } from 'mathjs';
+import { Matrix } from 'mathjs';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({

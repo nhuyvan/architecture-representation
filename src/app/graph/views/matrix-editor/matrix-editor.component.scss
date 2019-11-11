@@ -1,4 +1,4 @@
-.matrix {
+.matrix-editor {
     display: flex;
     align-items: center;
     max-height: 98vh;
@@ -8,17 +8,20 @@ h1 {
     margin-right: 0.5em;
 }
 
-.matrix__name {
+.matrix-editor__name {
     width: 1em;
     text-align: right;
 }
 
-.matrix__entries {
+.matrix-editor__entries {
     border-left: 2px solid #000;
     border-right: 2px solid #000;
     min-width: 5em;
     text-align: center;
     position: relative;
+    border-collapse: separate;
+    border-spacing: 3px;
+    padding: 0 5px;
 
     &::before,
     &::after,

@@ -4,6 +4,9 @@ import { take } from 'rxjs/operators';
 
 import { Cell } from '../../models/Cell';
 
+
+const columnHeaderHeight = 100;
+
 @Component({
   templateUrl: './text-editor.component.html',
   styleUrls: ['./text-editor.component.scss']
@@ -27,8 +30,7 @@ export class TextEditorComponent {
       const { top, left } = canvasScrollContainer.getBoundingClientRect();
       const scrollTop = canvasScrollContainer.scrollTop;
       this._input.nativeElement.style.left = left + cell.left + 2 + 'px';
-      // 100 is column header height
-      this._input.nativeElement.style.top = (cell.top - scrollTop + 3.5 + 100 + top) + 'px';
+      this._input.nativeElement.style.top = (cell.top - scrollTop + 3.5 + columnHeaderHeight + top) + 'px';
     } else {
       this._input.nativeElement.style.top = (cell.top + 4) + 'px';
       this._input.nativeElement.style.left = cell.left + 2 + 'px';
